@@ -21,6 +21,24 @@ from datetime import datetime
 from typing import Dict
 
 
+# 默认周报模板
+DEFAULT_TEMPLATE = """# 项目周报
+
+**汇报周期**: {{起始日期}} - {{结束日期}}
+
+## 本期工作内容
+
+{{工作内容列表}}
+
+## 存在问题和风险
+
+{{问题和风险}}
+
+---
+**共{{提交次数}}次提交**
+"""
+
+
 def render_template(template: str, context: Dict) -> str:
     """
     使用Jinja2渲染模板
@@ -97,7 +115,6 @@ def export_report(
     # 准备模板变量
     context = {
         "工作内容列表": content,
-        "问题和风险": "无",
         "提交次数": total_commits
     }
 
@@ -167,21 +184,7 @@ def main():
 
     # 默认模板
     if not args.template:
-        args.template = """# 项目周报
-
-**汇报周期**: {{起始日期}} - {{结束日期}}
-
-## 本期工作内容
-
-{{工作内容列表}}
-
-## 存在问题和风险
-
-{{问题和风险}}
-
----
-**共{{提交次数}}次提交**
-"""
+        args.template = DEFAULT_TEMPLATE
     else:
         # 如果提供了模板路径，读取文件内容
         template_path = Path(args.template)
@@ -192,21 +195,7 @@ def main():
             except Exception as e:
                 print(f"警告：无法读取模板文件 {template_path}，使用默认模板")
                 print(f"错误信息：{e}")
-                args.template = """# 项目周报
-
-**汇报周期**: {{起始日期}} - {{结束日期}}
-
-## 本期工作内容
-
-{{工作内容列表}}
-
-## 存在问题和风险
-
-{{问题和风险}}
-
----
-**共{{提交次数}}次提交**
-"""
+                args.template = DEFAULT_TEMPLATE
 
     # 导出周报
     output_file = export_report(
