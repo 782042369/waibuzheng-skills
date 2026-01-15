@@ -1,0 +1,111 @@
+{
+  "metadata": {
+    "project_name": "waibuzheng 的 skills 集合库",
+    "description": "用于存放多个技能（skills）的集合仓库，每个 skill 都是一个独立的功能模块",
+    "last_updated": "2026-01-15T21:58:03+08:00",
+    "version": "2.0.0",
+    "initialized_by": "Claude Code - AI Context Initializer"
+  },
+  "repository": {
+    "root_path": "E:\\工作\\study\\weekly-report",
+    "branch": "main",
+    "total_files_estimated": 45,
+    "scanned_files": 11,
+    "coverage_percentage": 100,
+    "truncated": false,
+    "git_status": "clean"
+  },
+  "modules": [
+    {
+      "name": "weekly-report-generator",
+      "path": "skills/weekly-report-generator",
+      "description": "自动化周报生成器，从Git提交记录生成专业工作汇报",
+      "language": "Python",
+      "status": "已实现",
+      "has_entry": true,
+      "has_tests": false,
+      "has_interfaces": true,
+      "entry_files": [
+        "scripts/get_git_logs.py",
+        "scripts/export_report.py"
+      ],
+      "important_paths": [
+        "skills/weekly-report-generator/SKILL.md",
+        "skills/weekly-report-generator/CLAUDE.md",
+        "skills/weekly-report-generator/scripts/",
+        "skills/weekly-report-generator/assets/",
+        "skills/weekly-report-generator/references/"
+      ],
+      "dependencies": [
+        "gitpython>=3.1.40",
+        "jinja2>=3.1.2"
+      ]
+    }
+  ],
+  "ignored_patterns": [
+    "node_modules/**",
+    ".git/**",
+    ".github/**",
+    "dist/**",
+    "build/**",
+    ".next/**",
+    "__pycache__/**",
+    "*.lock",
+    "*.log",
+    "*.bin",
+    "*.pdf",
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.gif",
+    "*.mp4",
+    "*.zip",
+    "*.tar",
+    "*.gz",
+    "output/**",
+    "nul"
+  ],
+  "gaps": [
+    {
+      "type": "missing_tests",
+      "description": "现有 skill 缺少单元测试和集成测试",
+      "priority": "medium",
+      "recommendation": "为 weekly-report-generator 添加测试用例，覆盖主要功能路径"
+    },
+    {
+      "type": "missing_readme",
+      "description": "缺少项目根目录的 README.md",
+      "priority": "low",
+      "recommendation": "创建 README.md 说明项目用途和快速开始指南"
+    },
+    {
+      "type": "more_skills",
+      "description": "当前只有 1 个 skill，可以添加更多 skills",
+      "priority": "low",
+      "recommendation": "根据需求添加新的 skills，遵循 Skill 目录结构规范"
+    }
+  ],
+  "next_steps": [
+    "为 weekly-report-generator 添加单元测试",
+    "创建项目根目录的 README.md",
+    "考虑添加更多有用的 skills",
+    "完善测试策略和编码规范文档"
+  ],
+  "statistics": {
+    "files_by_language": {
+      "Python": 2,
+      "Markdown": 4,
+      "Text": 1
+    },
+    "total_modules": 1,
+    "documented_modules": 1,
+    "modules_with_tests": 0,
+    "modules_with_interfaces": 1
+  },
+  "project_structure": {
+    "type": "monorepo",
+    "organization": "skills-based",
+    "root_documentation": "CLAUDE.md",
+    "module_documentation_pattern": "skills/*/CLAUDE.md"
+  }
+}
