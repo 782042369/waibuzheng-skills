@@ -30,7 +30,7 @@
 1. **克隆仓库**
 ```bash
 git clone <repository-url>
-cd weekly-report
+cd waibuzheng-skills
 ```
 
 2. **安装特定 skill 的依赖**

@@ -1,6 +1,6 @@
 # waibuzheng 的 Skills 集合库
 
-> 最后更新：2026-01-15 21:58:03
+> 最后更新：2026-01-15 23:20:35
 
 ## 项目愿景
 
@@ -88,7 +88,7 @@ skills/your-skill-name/
 1. **克隆仓库**
    ```bash
    git clone <repository-url>
-   cd weekly-report
+   cd waibuzheng-skills
    ```
 
 2. **安装依赖**
@@ -140,7 +140,7 @@ skills/your-skill-name/
 
 ### 适合 AI 辅助的任务
 
-- 使用 skill-creator 添加一个
+- 使用 skill-creator 添加新 skill
 - 生成新 skill 的框架代码
 - 优化和重构现有脚本
 - 编写单元测试
@@ -166,6 +166,14 @@ skills/your-skill-name/
 4. 确保添加必要的文档
 
 ## 变更记录
+
+### 2026-01-15 23:20:35
+- **重大更新**：重新初始化项目为标准的 skills 集合库
+- 使用 skill-creator 标准重构项目文档
+- 完善模块结构图（Mermaid）
+- 更新索引配置和覆盖率统计
+- 添加完整的模块导航和面包屑
+- 修复快速开始指南中的路径错误
 
 ### 2026-01-15 21:58:03
 - **重大更新**：项目从"周报生成器"转变为"waibuzheng 的 skills 集合库"
