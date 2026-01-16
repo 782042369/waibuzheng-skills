@@ -64,10 +64,22 @@ python scripts/export_report.py \
    - 绝对时间：`2025.1.10 - 2025.1.15`
    - 混合时间：`上周三到今天`
 
-3. **示例周报**（可选）
-   - 用户可粘贴一个示例周报内容
-   - AI 将严格模仿示例的格式和风格
-   - 包括：标题样式、章节结构、语言风格、术语使用
+3. **示例周报**（可选，推荐）
+
+   **方式1：直接粘贴文本内容**
+   - 用户直接粘贴示例周报文本
+   - AI 将模仿文本格式和风格
+
+   **方式2：提供模板文件路径**（推荐）
+   - 用户提供示例周报文件路径（.md 或 .docx）
+   - 调用 `analyze_template.py` 分析模板结构
+   - AI 基于结构化数据精确模仿
+
+   AI 将严格模仿示例的：
+   - 标题样式和层级
+   - 章节结构和顺序
+   - 语言风格和术语使用
+   - 格式和排版
 
 4. **输出文件名**（必需）
    - 用户指定输出文件名
@@ -97,9 +109,13 @@ AI: "本周 = 2025年1月13日（周一）至2025年1月17日（周五），确�
 
 调用 `scripts/get_git_logs.py` 获取提交记录。
 
+#### Step 3.5: 分析示例模板（如果用户提供）
+
+调用 `scripts/analyze_template.py` 分析模板文件，提取结构化信息。
+
 #### Step 4: AI 清洗内容 + 生成周报
 
-AI 基于 `references/report-prompts.md` 的规则清洗内容。
+AI 基于 `references/report-prompts.md` 的规则清洗内容，并基于模板结构（如果提供）生成周报。
 
 #### Step 5: 输出文件
 
@@ -147,44 +163,112 @@ AI 基于 `references/report-prompts.md` 的规则清洗内容。
 - 支持多项目聚合
 - 按天分组
 - 自动跳过周末的提交
+- 输入验证：日期格式、路径有效性检查
+
+### analyze_template.py
+
+**功能**：分析周报模板文件（Markdown 或 Word），提取结构化信息供 AI 使用
+
+**参数**：
+- `--template`（必需）：模板文件路径（支持 .md、.docx）
+- `--output`（可选）：输出 JSON 文件路径（不提供则打印到控制台）
+
+**返回格式**（JSON）：
+```json
+{
+  "type": "markdown",
+  "structure": {
+    "title": "模板标题",
+    "sections": [
+      {
+        "level": 1,
+        "title": "章节标题",
+        "content": "章节内容预览"
+      }
+    ]
+  },
+  "variables": {
+    "{{变量名}}": {
+      "name": "变量名",
+      "description": "变量：变量名",
+      "required": true
+    }
+  },
+  "raw_content": "模板的完整原始内容"
+}
+```
+
+**使用示例**：
+```bash
+# 分析 Markdown 模板
+python scripts/analyze_template.py \
+  --template "/path/to/template.md" \
+  --output "template_structure.json"
+
+# 分析 Word 模板
+python scripts/analyze_template.py \
+  --template "/path/to/template.docx"
+```
+
+**支持的功能**：
+- ✅ 自动检测文件类型（.md / .docx）
+- ✅ 提取标题层级结构（#、##、###）
+- ✅ 识别变量占位符（`{{变量名}}`）
+- ✅ 返回完整的原始内容
+- ✅ 判断变量是否必需
+- ✅ 专业的 Word 文档解析（提取标题样式、层级等）
+
+**典型工作流**：
+1. 用户提供示例周报文件
+2. 调用 `analyze_template.py` 获取模板结构
+3. AI 基于结构信息精确模仿格式
+4. 生成的新周报严格遵循模板风格
 
 ### export_report.py
 
-**功能**：根据模板导出周报文件
+**功能**：将 AI 生成的周报内容写入文件，支持 Markdown、Word 格式
 
 **参数**：
-- `--content`（必需）：周报内容（清洗后的工作内容列表）
-- `--template`（可选）：模板内容（不提供则使用默认模板）
+- `--content`（必需）：完整的周报内容（AI 已生成，Markdown 格式）
 - `--output`（必需）：输出目录路径
-- `--filename`（必需）：输出文件名（如：20250115周报.md）
-- `--start-date`（可选）：开始日期（YYYY-MM-DD 格式）
-- `--end-date`（可选）：结束日期（YYYY-MM-DD 格式）
-- `--total-commits`（可选）：提交次数（默认 0）
+- `--filename`（可选）：输出文件名（如：20250115周报.md，不提供则自动生成）
+- `--start-date`（可选）：开始日期（YYYY-MM-DD 格式，用于自动文件名）
+- `--end-date`（可选）：结束日期（YYYY-MM-DD 格式，用于自动文件名）
 
-**默认模板**：
-```markdown
-# 项目周报
+**自动格式检测**：
+- **根据 `filename` 扩展名自动检测输出格式**：
+  - `.md` → Markdown 格式
+  - `.docx` → Word 格式
+  - 未指定或无扩展名 → 默认 Markdown 格式
+- **无需 `--format` 参数**：脚本自动根据文件名选择输出方式
 
-**汇报周期**: {{起始日期}} - {{结束日期}}
+**自动文件名生成**：
+- 格式：`周报YYYYMMDD-YYYYMMDD.md`
+- 示例：`周报20250113-20250117.md`
+- 触发条件：未提供 `--filename` 时，必须提供 `--start-date` 和 `--end-date`
 
-## 本期工作内容
+**使用示例**：
+```bash
+# Markdown 输出
+python scripts/export_report.py \
+  --content "AI生成的完整周报内容" \
+  --output "output" \
+  --filename "周报.md"
 
-{{工作内容列表}}
+# Word 输出（自动检测 .docx 扩展名）
+python3.12 scripts/export_report.py \
+  --content "AI生成的完整周报内容" \
+  --output "output" \
+  --filename "周报.docx"
 
-## 存在问题和风险
-
-{{问题和风险}}
-
----
-**共{{提交次数}}次提交**
+# 自动文件名（默认 Markdown）
+python3.12 scripts/export_report.py \
+  --content "AI生成的完整周报内容" \
+  --output "output" \
+  --start-date "2025-01-13" \
+  --end-date "2025-01-17"
+# 生成：output/周报20250113-20250117.md
 ```
-
-**模板变量**：
-- `{{起始日期}}` - 2025年1月13日（周一）
-- `{{结束日期}}` - 2025年1月17日（周五）
-- `{{工作内容列表}}` - AI 清洗后的内容
-- `{{问题和风险}}` - 默认"无"
-- `{{提交次数}}` - 总提交次数
 
 ## 关键依赖与配置
 
@@ -193,27 +277,25 @@ AI 基于 `references/report-prompts.md` 的规则清洗内容。
 **requirements.txt**：
 ```
 gitpython>=3.1.40
-jinja2>=3.1.2
+python-docx>=0.8.11
 ```
 
 **依赖说明**：
-- `gitpython` - Git 操作库，用于读取 Git 提交记录
-- `jinja2` - 模板引擎，用于生成周报文档
+- `gitpython>=3.1.40` - Git 操作库，用于读取 Git 提交记录
+- `python-docx>=0.8.11` - Word 文件读写库（可选，仅 Word 输出时需要）
 
-### 安装方法
+**环境要求**：
+- Python 3.8+ （推荐 Python 3.12）
+- Git（用于访问 Git 仓库）
 
+**安装方法**：
 ```bash
 # 使用 requirements.txt
 pip install -r requirements.txt
 
 # 或直接安装
-pip install gitpython jinja2
+pip install gitpython python-docx
 ```
-
-### 环境要求
-
-- Python 3.8+
-- Git（用于访问 Git 仓库）
 
 ## 数据模型
 
@@ -397,7 +479,7 @@ AI 会解析并计算实际的日期范围，然后交互确认。
 
 **A**: 输出 Markdown 格式（.md），可以：
 - 直接在 Markdown 编辑器中查看
-- 转换为 Word、PDF 等格式
+- 转换为 Word 等格式
 - 在支持 Markdown 的平台直接使用
 
 ### Q7: 如何确保周报内容符合领导要求？
@@ -429,7 +511,6 @@ AI 会解析并计算实际的日期范围，然后交互确认。
 
 | 文件路径 | 说明 |
 |---------|------|
-| `assets/templates/default_template.md` | 默认周报模板 |
 | `references/report-prompts.md` | AI 内容清洗规则和术语转换表 |
 
 ## 变更记录

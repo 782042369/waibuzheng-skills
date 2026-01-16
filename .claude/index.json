@@ -53,7 +53,6 @@
     "*.lock",
     "*.log",
     "*.bin",
-    "*.pdf",
     "*.png",
     "*.jpg",
     "*.jpeg",
