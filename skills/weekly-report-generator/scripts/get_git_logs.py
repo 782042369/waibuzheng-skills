@@ -225,9 +225,11 @@ def main():
         help="输出到文件（避免控制台编码问题）"
     )
     parser.add_argument(
-        "--minimal",
-        action="store_true",
-        help="精简模式：只保留必要信息（message、date、weekday），减少 token 消耗"
+        "--no-minimal",
+        action="store_false",
+        dest="minimal",
+        default=True,
+        help="关闭精简模式，输出完整信息（包含 hash、author、email 等字段）"
     )
 
     args = parser.parse_args()
@@ -237,7 +239,7 @@ def main():
     print(f"  - 开始日期：{args.since}")
     print(f"  - 结束日期：{args.until}")
     print(f"  - 输出文件：{args.output if args.output else '（控制台输出）'}")
-    print(f"  - 精简模式：{'是' if args.minimal else '否'}")
+    print(f"  - 精简模式：{'否（完整模式）' if not args.minimal else '是（默认）'}")
     print()
 
     # ===== 新增：输入验证 =====
@@ -274,8 +276,10 @@ def main():
     # 获取所有项目的日志
     print("📥 开始获取 Git 日志...")
     print(f"共 {len(paths)} 个项目")
-    if args.minimal:
-        print("🎯 精简模式已启用（只保留 message、date、weekday）")
+    if not args.minimal:
+        print("⚠️  完整模式已启用（包含 hash、author、email 等字段）")
+    else:
+        print("🎯 精简模式（默认）：只保留 message、date、weekday，减少 token 消耗")
     print()
     all_commits = []
 
