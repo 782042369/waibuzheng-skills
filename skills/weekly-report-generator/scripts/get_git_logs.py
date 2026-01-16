@@ -5,8 +5,8 @@ Git日志获取脚本
 
 功能：
 - 获取单个或多个项目的Git日志
-- 按周一到周五分组
-- 只返回工作日的提交
+- 按星期几分组（周一到周日）
+- 支持调休补班情况（不过滤周末）
 - 返回结构化JSON数据
 - 添加输入验证和友好错误提示
 
@@ -62,29 +62,16 @@ def print_validation_error(errors: List[str]) -> None:
 
 def get_week_day_name(date: datetime) -> str:
     """
-    获取星期几的中文名称
+    获取星期几的中文名称（支持周一到周日）
 
     Args:
         date: 日期对象
 
     Returns:
-        星期几的中文名称：周一、周二、...、周五、周六、周日
+        星期几的中文名称：周一、周二、周三、周四、周五、周六、周日
     """
     weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
     return weekdays[date.weekday()]
-
-
-def is_weekday(date: datetime) -> bool:
-    """
-    判断是否是工作日（周一到周五）
-
-    Args:
-        date: 日期对象
-
-    Returns:
-        True表示工作日，False表示周末
-    """
-    return date.weekday() < 5  # 0-4是周一到周五，5-6是周六周日
 
 
 def get_git_logs(
@@ -139,8 +126,8 @@ def get_git_logs(
         ):
             commit_date = commit.committed_datetime
 
-            # 只保留工作日的提交（周一到周五）
-            if not is_weekday(commit_date):
+            # 过滤掉 merge commit（多个父提交的提交是 merge commit）
+            if len(commit.parents) > 1:
                 continue
 
             commit_info = {
@@ -164,20 +151,22 @@ def get_git_logs(
 
 def group_by_weekday(commits: List[Dict]) -> Dict[str, List[Dict]]:
     """
-    按星期几分组提交记录
+    按星期几分组提交记录（支持周一到周日）
 
     Args:
         commits: 提交记录列表
 
     Returns:
-        按星期几分组的字典
+        按星期几分组的字典（包含周一到周日）
     """
     grouped = {
         "周一": [],
         "周二": [],
         "周三": [],
         "周四": [],
-        "周五": []
+        "周五": [],
+        "周六": [],
+        "周日": []
     }
 
     for commit in commits:
@@ -191,7 +180,7 @@ def group_by_weekday(commits: List[Dict]) -> Dict[str, List[Dict]]:
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(
-        description="获取Git日志并按周一到周五分组"
+        description="获取Git日志并按星期几分组（支持周一到周日）"
     )
     parser.add_argument(
         "--paths",
@@ -263,11 +252,10 @@ def main():
 
     # 如果没有提交记录，给用户友好提示
     if total_commits == 0:
-        print(f"\n⚠️ 警告：在 {args.since} 至 {args.until} 期间没有找到工作日的提交记录")
+        print(f"\n⚠️ 警告：在 {args.since} 至 {args.until} 期间没有找到提交记录")
         print("   请检查：")
         print("   1. 日期范围是否正确")
         print("   2. 项目是否有提交记录")
-        print("   3. 提交是否都在周末")
         print()
 
     result = {
