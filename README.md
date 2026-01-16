@@ -1,6 +1,6 @@
 # waibuzheng 的 Skills 集合库
 
-> 最后更新：2026-01-15 22:15:00
+> 最后更新：2026-01-16 14:20:00
 
 ## 📖 项目简介
 
@@ -11,18 +11,24 @@
 - 遵循 skill-creator 最佳实践
 - 支持灵活的组合和扩展
 
+**项目特点**：
+- 📦 Monorepo 架构，统一管理多个 skills
+- 🤖 AI 友好，提供完整的上下文文档
+- 🔧 可复用、可组合、可扩展
+- 📝 标准化的文档结构和代码规范
+
 ## ✨ 当前包含的 Skills
 
-| Skill | 描述 | 语言 | 状态 |
-|-------|------|------|------|
-| [weekly-report-generator](./skills/weekly-report-generator/) | 自动化周报生成器，从Git提交记录生成专业工作汇报 | Python | ✅ 已实现 |
+| Skill | 描述 | 语言 | 状态 | 文档 |
+|-------|------|------|------|------|
+| [weekly-report-generator](./skills/weekly-report-generator/) | 自动化周报生成器，从 Git 提交记录生成专业工作汇报 | Python | ✅ 已实现 | [查看](./skills/weekly-report-generator/SKILL.md) |
 
 ## 🚀 快速开始
 
 ### 前置要求
 
 - Python 3.8+ （使用 Python 的 skill）
-- Node.js 16+ （使用 Node.js 的 skill）
+- Node.js 20+ （使用 Node.js 的 skill）
 - Git （部分 skill 需要）
 
 ### 安装和使用
@@ -43,6 +49,23 @@ pip install -r requirements.txt
 3. **使用 skill**
 - 参考 skill 的 `SKILL.md` 文档
 - 按照工作流程使用
+
+**示例 - 周报生成器**：
+```bash
+# 1. 获取 Git 日志
+python scripts/get_git_logs.py \
+  --paths "/path/to/project" \
+  --since "2025-01-13" \
+  --until "2025-01-17"
+
+# 2. AI 清洗内容（基于 references/report-prompts.md）
+
+# 3. 导出周报
+python scripts/export_report.py \
+  --content "清洗后的内容" \
+  --output "./output" \
+  --filename "周报.md"
+```
 
 ## 📚 如何添加新的 Skill
 
@@ -71,10 +94,11 @@ pip install -r requirements.txt
 
 ```bash
 # 1. 安装插件
+# 使用 Claude Code 内置 skill
 /plugin marketplace add anthropics/skills
 
 # 2. 在对话中输入
-skill-creator create my-skill
+根据 example-skills 中的 skill-creator 实现一个 xxx skill
 ```
 
 ---
@@ -87,37 +111,122 @@ Claude 创建的 skill 会遵循标准结构：
 skills/your-skill-name/
 ├── SKILL.md                      # 核心文档（必需）
 ├── CLAUDE.md                     # AI 上下文（必需）
+├── README.md                     # 使用说明（推荐）
 ├── requirements.txt              # Python 依赖
 ├── scripts/                      # 核心脚本
-├── assets/                       # 资源文件
+├── assets/                       # 资源文件（可选）
 │   └── templates/
-└── references/                   # 参考文档
+└── references/                   # 参考文档（可选）
+```
+
+**最小结构**：
+```
+skills/your-skill-name/
+└── SKILL.md                      # 核心文档（必需）
 ```
 
 ## 📖 文档导航
 
-- [项目总体说明](./CLAUDE.md) - AI 上下文文档
-- [Skills 规范](./CLAUDE.md#如何添加新的-skill) - 如何添加新的 skill
-- [周报生成器文档](./skills/weekly-report-generator/) - 查看具体 skill 实现
+### 项目级文档
+
+- **[项目总体说明](./CLAUDE.md)** - AI 上下文文档，包含：
+  - 项目愿景和架构总览
+  - 模块结构图（Mermaid）
+  - 模块索引和快速导航
+  - 如何添加新的 Skill
+  - 编码规范和 AI 使用指引
+
+### Skill 级文档
+
+- **[周报生成器 - 核心文档](./skills/weekly-report-generator/SKILL.md)** - 功能说明和使用流程
+- **[周报生成器 - 实现细节](./skills/weekly-report-generator/CLAUDE.md)** - 架构设计和 API 文档
+- **[周报生成器 - 快速开始](./skills/weekly-report-generator/README.md)** - 安装和基本用法
+
+## 🎯 项目架构
+
+```
+waibuzheng-skills/
+├── CLAUDE.md                    # 根级 AI 上下文
+├── README.md                    # 根级说明（本文件）
+├── .claude/
+│   └── index.json               # 项目索引配置
+└── skills/                      # Skills 集合
+    ├── weekly-report-generator/
+    │   ├── SKILL.md            # 核心 instructions
+    │   ├── CLAUDE.md           # AI 上下文
+    │   ├── README.md           # 使用说明
+    │   ├── requirements.txt    # 依赖清单
+    │   ├── scripts/            # 核心脚本
+    │   │   ├── get_git_logs.py
+    │   │   ├── export_report.py
+    │   │   └── analyze_template.py
+    │   └── references/         # 参考文档
+    │       └── report-prompts.md
+    └── [future skills...]
+```
 
 ## 🤝 贡献指南
 
 欢迎贡献新的 skills！请遵循以下规范：
 
-1. 遵循 Skill 目录结构规范
-2. 创建完整的 SKILL.md 和 CLAUDE.md
-3. 添加必要的依赖文件
-4. 更新根级文档
+1. **遵循 Skill 目录结构规范**
+2. **创建完整的 SKILL.md 和 CLAUDE.md**
+3. **添加必要的依赖文件**（如 requirements.txt）
+4. **更新根级文档**（README.md 和 CLAUDE.md）
+5. **遵循编码规范**（见 CLAUDE.md）
 
-## 📝 许可证
+### 贡献流程
 
-待定
+1. Fork 本仓库
+2. 创建你的 skill 分支：`git checkout -b skill/my-new-skill`
+3. 按照 Skill 标准创建目录和文件
+4. 提交你的改动：`git commit -m "✨ feat: add my-new-skill"`
+5. 推送到分支：`git push origin skill/my-new-skill`
+6. 创建 Pull Request
+
+## 📊 项目状态
+
+- **版本**：3.0.0
+- **最后更新**：2026-01-16
+- **Skills 数量**：1
+- **文档覆盖率**：100%
+- **测试覆盖率**：待完善
+
+## 🛠️ 技术栈
+
+- **Python Skills**：Python 3.8+、Git
+- **Node.js Skills**：Node.js 20+、npm
+- **文档工具**：Markdown、Mermaid
+- **版本控制**：Git
+
+## 📝 变更记录
+
+### 2026-01-16
+- ✨ 新增 `analyze_template.py` 脚本，支持分析 Markdown 和 Word 模板
+- ✨ 新增 `README.md` 文档，提供快速开始指南
+- ♻️ 重构 `export_report.py`，支持自动检测文件格式
+- ♻️ 重构 `get_git_logs.py`，改进错误处理
+- 📝 更新文档，清理测试输出目录
+- 📦 更新依赖版本要求
+
+### 2026-01-15
+- 🎉 项目初始化，创建 monorepo 结构
+- ✨ 实现 `weekly-report-generator` skill
+- 📝 编写完整的项目文档
+- 🔧 配置 `.claude/index.json` 索引
+
+## 📄 许可证
+
+MIT License
 
 ## 📮 联系方式
 
-- 项目维护者：waibuzheng
-- 问题反馈：通过 GitHub Issues
+- **项目维护者**：waibuzheng
+- **问题反馈**：通过 GitHub Issues
+- **功能建议**：通过 GitHub Discussions
 
 ---
 
 **Happy Coding! 🎉**
+
+_这个项目使用 [skill-creator](https://github.com/anthropics/skills) 最佳实践开发_
