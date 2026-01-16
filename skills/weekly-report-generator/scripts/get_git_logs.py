@@ -179,6 +179,11 @@ def group_by_weekday(commits: List[Dict]) -> Dict[str, List[Dict]]:
 
 def main():
     """主函数"""
+    print("=" * 60)
+    print("🚀 Git 日志获取脚本启动")
+    print("=" * 60)
+    print()
+
     parser = argparse.ArgumentParser(
         description="获取Git日志并按星期几分组（支持周一到周日）"
     )
@@ -208,6 +213,13 @@ def main():
 
     args = parser.parse_args()
 
+    print("📋 输入参数：")
+    print(f"  - 项目路径：{args.paths}")
+    print(f"  - 开始日期：{args.since}")
+    print(f"  - 结束日期：{args.until}")
+    print(f"  - 输出文件：{args.output if args.output else '（控制台输出）'}")
+    print()
+
     # ===== 新增：输入验证 =====
     errors = []
 
@@ -233,27 +245,47 @@ def main():
         sys.exit(1)
     # ===== 验证结束 =====
 
+    print("✅ 输入验证通过")
+    print()
+
     # 解析项目路径（已在上面完成）
     # paths = [p.strip() for p in args.paths.split(",")]  # 删除这行
 
     # 获取所有项目的日志
+    print("📥 开始获取 Git 日志...")
+    print(f"共 {len(paths)} 个项目")
+    print()
     all_commits = []
 
-    for path in paths:
-        print(f"正在获取 {path} 的日志...")
+    for i, path in enumerate(paths, 1):
+        print(f"[{i}/{len(paths)}] 正在获取：{path}")
         commits = get_git_logs(path, args.since, args.until)
+        print(f"         └─ 找到 {len(commits)} 条提交记录")
         all_commits.extend(commits)
 
+    print()
+    print(f"✅ 共获取 {len(all_commits)} 条提交记录")
+    print()
+
     # 按星期几分组
+    print("📊 正在按星期几分组...")
     grouped = group_by_weekday(all_commits)
 
     # 统计信息
     total_commits = sum(len(commits) for commits in grouped.values())
 
+    # 打印每日统计
+    print("📅 每日提交统计：")
+    for weekday in ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]:
+        count = len(grouped[weekday])
+        if count > 0:
+            print(f"  {weekday}：{count} 条")
+    print()
+
     # 如果没有提交记录，给用户友好提示
     if total_commits == 0:
-        print(f"\n⚠️ 警告：在 {args.since} 至 {args.until} 期间没有找到提交记录")
-        print("   请检查：")
+        print(f"⚠️ 警告：在 {args.since} 至 {args.until} 期间没有找到提交记录")
+        print("💡 请检查：")
         print("   1. 日期范围是否正确")
         print("   2. 项目是否有提交记录")
         print()
@@ -266,16 +298,28 @@ def main():
     }
 
     # 输出JSON（到文件或控制台）
+    print("💾 正在输出 JSON...")
     json_output = json.dumps(result, ensure_ascii=False, indent=2)
 
     if args.output:
         # 输出到文件，避免控制台编码问题
+        print(f"   写入文件：{args.output}")
         with open(args.output, "w", encoding="utf-8") as f:
             f.write(json_output)
         print(f"✅ 结果已保存到：{args.output}")
+        print(f"   文件大小：{len(json_output)} 字节")
     else:
         # 输出到控制台
+        print("   输出到控制台")
+        print()
+        print("-" * 60)
         print(json_output)
+        print("-" * 60)
+
+    print()
+    print("=" * 60)
+    print("✅ Git 日志获取完成")
+    print("=" * 60)
 
 
 if __name__ == "__main__":

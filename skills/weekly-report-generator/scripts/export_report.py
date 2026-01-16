@@ -366,6 +366,11 @@ def export_report(
 
 def main():
     """主函数"""
+    print("=" * 60)
+    print("📝 周报导出脚本启动")
+    print("=" * 60)
+    print()
+
     parser = argparse.ArgumentParser(
         description="将AI生成的周报内容写入文件，支持Markdown/Word格式"
     )
@@ -399,8 +404,34 @@ def main():
 
     args = parser.parse_args()
 
+    print("📋 输入参数：")
+    print(f"  - 输出目录：{args.output}")
+    print(f"  - 文件名：{args.filename if args.filename else '（自动生成）'}")
+    if args.start_date and args.end_date:
+        print(f"  - 日期范围：{args.start_date} 至 {args.end_date}")
+    content_preview = args.content[:100] + "..." if len(args.content) > 100 else args.content
+    print(f"  - 内容预览：{content_preview}")
+    print()
+
     # 导出周报
+    print("📤 正在导出周报...")
     try:
+        # 检测文件名和格式
+        if args.filename:
+            filename = args.filename
+            output_format = detect_output_format(filename)
+            format_name = "Word (.docx)" if output_format == "word" else "Markdown (.md)"
+            print(f"  - 文件名：{filename}")
+            print(f"  - 输出格式：{format_name}")
+        else:
+            if not args.start_date or not args.end_date:
+                raise ValueError("未提供文件名时，必须提供 start_date 和 end_date 用于自动生成文件名")
+            filename = generate_auto_filename(args.start_date, args.end_date)
+            print(f"  - 自动生成文件名：{filename}")
+            print(f"  - 输出格式：Markdown (.md)")
+
+        print()
+
         output_file = export_report(
             content=args.content,
             output_path=args.output,
@@ -409,11 +440,33 @@ def main():
             end_date=args.end_date
         )
 
-        print(f"周报已生成：{output_file}")
+        # 获取文件大小
+        file_size = Path(output_file).stat().st_size
+        size_kb = file_size / 1024
+
+        print()
+        print("✅ 周报导出成功")
+        print(f"   文件路径：{output_file}")
+        print(f"   文件大小：{file_size} 字节（{size_kb:.2f} KB）")
 
     except Exception as e:
-        print(f"错误：{e}", file=sys.stderr)
+        print()
+        print(f"❌ 导出失败：{e}")
+        print()
+        print("💡 可能的原因：")
+        print("   1. 输出目录不存在或无写入权限")
+        print("   2. Word 格式需要安装 python-docx：pip install python-docx")
+        print("   3. 内容格式不正确")
+        import traceback
+        print()
+        print("详细错误信息：")
+        traceback.print_exc()
         sys.exit(1)
+
+    print()
+    print("=" * 60)
+    print("✅ 周报导出完成")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
