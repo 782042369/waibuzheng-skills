@@ -8,6 +8,7 @@ Git日志获取脚本
 - 按周一到周五分组
 - 只返回工作日的提交
 - 返回结构化JSON数据
+- 添加输入验证和友好错误提示
 
 作者：老王
 日期：2026-01-15
@@ -18,7 +19,45 @@ import json
 import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple, Optional
+
+
+# ========== 输入验证函数（内联） ==========
+
+def validate_date(date_str: str) -> Tuple[bool, Optional[str]]:
+    """验证日期格式（YYYY-MM-DD）"""
+    if not date_str:
+        return False, "日期不能为空"
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return True, None
+    except ValueError:
+        return False, f"日期格式不正确：'{date_str}'，应为 YYYY-MM-DD 格式（例如：2025-01-13）"
+
+
+def validate_repo_path(path: str) -> Tuple[bool, Optional[str]]:
+    """验证 Git 仓库路径"""
+    if not path:
+        return False, "路径不能为空"
+    repo_path = Path(path)
+    if not repo_path.exists():
+        return False, f"路径不存在：'{path}'"
+    if not (repo_path / ".git").exists():
+        return False, f"不是 Git 仓库：'{path}'（未找到 .git 目录）"
+    return True, None
+
+
+def print_validation_error(errors: List[str]) -> None:
+    """打印友好的验证错误消息"""
+    print("\n❌ 输入验证失败！")
+    print("请检查以下问题：\n")
+    for i, error in enumerate(errors, 1):
+        print(f"  {i}. {error}")
+    print("\n💡 提示：")
+    print("  - 日期格式：YYYY-MM-DD（例如：2025-01-13）")
+    print("  - 路径格式：绝对路径或相对路径均可")
+    print("  - Git 仓库：必须包含 .git 目录")
+    print()
 
 
 def get_week_day_name(date: datetime) -> str:
@@ -180,8 +219,33 @@ def main():
 
     args = parser.parse_args()
 
-    # 解析项目路径
+    # ===== 新增：输入验证 =====
+    errors = []
+
+    # 验证日期
+    is_valid, error = validate_date(args.since)
+    if not is_valid:
+        errors.append(f"开始日期：{error}")
+
+    is_valid, error = validate_date(args.until)
+    if not is_valid:
+        errors.append(f"结束日期：{error}")
+
+    # 验证路径
     paths = [p.strip() for p in args.paths.split(",")]
+    for path in paths:
+        is_valid, error = validate_repo_path(path)
+        if not is_valid:
+            errors.append(error)
+
+    # 如果有错误，打印并退出
+    if errors:
+        print_validation_error(errors)
+        sys.exit(1)
+    # ===== 验证结束 =====
+
+    # 解析项目路径（已在上面完成）
+    # paths = [p.strip() for p in args.paths.split(",")]  # 删除这行
 
     # 获取所有项目的日志
     all_commits = []
@@ -197,6 +261,15 @@ def main():
     # 统计信息
     total_commits = sum(len(commits) for commits in grouped.values())
 
+    # 如果没有提交记录，给用户友好提示
+    if total_commits == 0:
+        print(f"\n⚠️ 警告：在 {args.since} 至 {args.until} 期间没有找到工作日的提交记录")
+        print("   请检查：")
+        print("   1. 日期范围是否正确")
+        print("   2. 项目是否有提交记录")
+        print("   3. 提交是否都在周末")
+        print()
+
     result = {
         "start_date": args.since,
         "end_date": args.until,
@@ -211,7 +284,7 @@ def main():
         # 输出到文件，避免控制台编码问题
         with open(args.output, "w", encoding="utf-8") as f:
             f.write(json_output)
-        print(f"结果已保存到：{args.output}")
+        print(f"✅ 结果已保存到：{args.output}")
     else:
         # 输出到控制台
         print(json_output)
