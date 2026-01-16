@@ -202,8 +202,9 @@ AI 确认：
 ✅ Git 日志获取完成（共 X 条提交记录）
 ```
 
-调用 `scripts/get_git_logs.py` 获取提交记录：
+**调用方式**：
 
+**方式1：完整模式（默认）** - 包含所有字段
 ```bash
 python scripts/get_git_logs.py \
   --paths "项目路径1,项目路径2" \
@@ -211,26 +212,100 @@ python scripts/get_git_logs.py \
   --until "2025-01-17"
 ```
 
-**返回格式**（JSON）：
+**方式2：精简模式（推荐）** - 只保留必要信息，减少 token 消耗
+```bash
+python scripts/get_git_logs.py \
+  --paths "项目路径1,项目路径2" \
+  --since "2025-01-13" \
+  --until "2025-01-17" \
+  --minimal
+```
+
+**返回格式对比**：
+
+**完整模式**（JSON）：
 ```json
 {
-  "周一": [
-    {"hash": "abc123", "author": "张三", "message": "修复登录bug", "time": "10:30"}
-  ],
-  "周二": [
-    {"hash": "def456", "author": "李四", "message": "新增用户管理功能", "time": "14:20"}
-  ],
-  "周三": [],
-  "周四": [...],
-  "周五": [...]
+  "start_date": "2025-01-13",
+  "end_date": "2025-01-17",
+  "total_commits": 15,
+  "commits_by_day": {
+    "周一": [
+      {
+        "hash": "abc123",
+        "author": "张三",
+        "email": "zhangsan@example.com",
+        "message": "修复登录bug",
+        "date": "2025-01-13",
+        "time": "10:30",
+        "weekday": "周一"
+      }
+    ],
+    "周二": [
+      {
+        "hash": "def456",
+        "author": "李四",
+        "email": "lisi@example.com",
+        "message": "新增用户管理功能",
+        "date": "2025-01-14",
+        "time": "14:20",
+        "weekday": "周二"
+      }
+    ]
+  }
 }
 ```
+
+**精简模式**（JSON，减少约 60% token）：
+```json
+{
+  "total": 15,
+  "by_day": {
+    "周一": [
+      {
+        "msg": "修复登录bug",
+        "date": "2025-01-13",
+        "wd": "周一"
+      }
+    ],
+    "周二": [
+      {
+        "msg": "新增用户管理功能",
+        "date": "2025-01-14",
+        "wd": "周二"
+      }
+    ]
+  }
+}
+```
+
+**字段说明**：
+
+| 字段 | 完整模式 | 精简模式 | 说明 |
+|------|---------|---------|------|
+| 提交信息 | `message` | `msg` | 精简模式只保留第一行 |
+| 日期 | `date` | `date` | 格式：YYYY-MM-DD |
+| 星期 | `weekday` | `wd` | 周一到周日 |
+| 哈希值 | `hash` | ❌ 移除 | 不需要 |
+| 作者 | `author` | ❌ 移除 | 不需要 |
+| 邮箱 | `email` | ❌ 移除 | 不需要 |
+| 时间 | `time` | ❌ 移除 | 不需要 |
+| 起始日期 | `start_date` | ❌ 移除 | AI 已知 |
+| 结束日期 | `end_date` | ❌ 移除 | AI 已知 |
+| 总数 | `total_commits` | `total` | 精简字段名 |
+| 按天分组 | `commits_by_day` | `by_day` | 精简字段名 |
+
+**AI 使用建议**：
+- ✅ **推荐使用精简模式**（`--minimal`）：减少约 60% token 消耗
+- ✅ 精简模式保留了所有必要信息（提交内容、日期、星期）
+- ✅ 不影响后续的内容清洗和周报生成
 
 **特性**：
 - 只返回工作日（周一到周五）的提交
 - 支持多项目聚合
 - 按天分组
 - 自动跳过周末的提交
+- 精简模式只保留第一行提交信息（移除多行描述）
 
 ### Step 3.5: 分析示例模板（如果用户提供）
 
@@ -421,8 +496,8 @@ python scripts/export_report.py \
 [循环处理每一周]
 ⏳ 进度：1/30（3%）| 预计剩余时间：X 分钟
 📍 处理第 1 周：2025-05-12 至 2025-05-18
-  ⏳ 正在调用脚本：get_git_logs.py
-  ✅ Git 日志获取完成（共 X 条提交记录）
+  ⏳ 正在调用脚本：get_git_logs.py --minimal
+  ✅ Git 日志获取完成（共 X 条提交记录，精简模式）
   ⏳ 正在清洗内容...
   ✅ 内容清洗完成
   ⏳ 正在调用脚本：export_report.py
@@ -430,8 +505,8 @@ python scripts/export_report.py \
 
 ⏳ 进度：2/30（7%）| 预计剩余时间：X 分钟
 📍 处理第 2 周：2025-05-19 至 2025-05-25
-  ⏳ 正在调用脚本：get_git_logs.py
-  ✅ Git 日志获取完成（共 X 条提交记录）
+  ⏳ 正在调用脚本：get_git_logs.py --minimal
+  ✅ Git 日志获取完成（共 X 条提交记录，精简模式）
   ...
 
 ✅ 多周处理完成！共生成 30 个周报文件
@@ -440,7 +515,7 @@ python scripts/export_report.py \
 **循环流程**：
 ```
 for 每周 in 时间范围:
-  1. 调用 get_git_logs.py 获取该周的日志（或从缓存提取）
+  1. 调用 get_git_logs.py --minimal 获取该周的日志（精简模式）
   2. 调用 analyze_template.py 分析模板（仅第一次）
   3. AI 清洗内容 + 生成周报
   4. 调用 export_report.py 导出文件（使用自定义命名规则）
@@ -489,11 +564,16 @@ for 每周 in 时间范围:
 | 1 | 收集用户输入 | AI 对话 | 项目路径、时间表达式、输出方式、示例周报文件或文本、命名规则 | 结构化需求 |
 | 1.5 | 检测时间跨度并拆分 | AI 计算 | 时间范围（>7天时） | 按周拆分的日期列表 |
 | 2 | 解析时间 | AI 计算 | 时间表达式 | 日期范围 |
-| 3 | 获取 Git 日志 | get_git_logs.py | 项目路径、日期范围 | JSON 提交记录 |
+| 3 | 获取 Git 日志 | get_git_logs.py | 项目路径、日期范围、精简模式（--minimal） | JSON 提交记录（精简或完整） |
 | 3.5 | 分析模板 | analyze_template.py | 示例周报文件（可选） | JSON 模板结构 |
 | 4 | 清洗内容 + 格式化 | AI + report-prompts.md + 模板结构 | Git 提交信息、模板结构、输出方式 | 业务语言内容（按天或合并） |
 | 5 | 导出文件 | export_report.py | AI 生成的内容、文件名、输出路径 | .md 或 .docx 文件 |
 | 6 | 多周循环处理 | AI + 脚本 | 时间范围（多周时） | 批量周报文件 |
+
+**精简模式说明**：
+- **推荐**：在 Step 3 调用 `get_git_logs.py` 时使用 `--minimal` 参数
+- **效果**：减少约 60% token 消耗，只保留必要信息（msg、date、wd）
+- **影响**：不影响后续步骤（内容清洗、周报生成）
 
 ## 使用场景示例
 

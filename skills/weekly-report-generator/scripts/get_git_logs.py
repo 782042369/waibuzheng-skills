@@ -77,7 +77,8 @@ def get_week_day_name(date: datetime) -> str:
 def get_git_logs(
     repo_path: str,
     start_date: str,
-    end_date: str
+    end_date: str,
+    minimal: bool = False
 ) -> List[Dict]:
     """
     获取单个Git仓库的日志
@@ -86,6 +87,7 @@ def get_git_logs(
         repo_path: Git仓库路径
         start_date: 开始日期（YYYY-MM-DD格式）
         end_date: 结束日期（YYYY-MM-DD格式）
+        minimal: 精简模式（只保留必要信息，减少 token 消耗）
 
     Returns:
         提交记录列表
@@ -130,15 +132,26 @@ def get_git_logs(
             if len(commit.parents) > 1:
                 continue
 
-            commit_info = {
-                "hash": commit.hexsha[:7],
-                "author": commit.author.name,
-                "email": commit.author.email,
-                "message": commit.message.strip(),
-                "date": commit_date.strftime("%Y-%m-%d"),
-                "time": commit_date.strftime("%H:%M"),
-                "weekday": get_week_day_name(commit_date)
-            }
+            # 精简模式：只保留必要信息
+            if minimal:
+                # 只保留 message、date、weekday
+                # 移除 hash、author、email、time 等不必要的字段
+                commit_info = {
+                    "msg": commit.message.strip().split('\n')[0],  # 只保留第一行
+                    "date": commit_date.strftime("%Y-%m-%d"),
+                    "wd": get_week_day_name(commit_date)
+                }
+            else:
+                # 完整模式：保留所有信息
+                commit_info = {
+                    "hash": commit.hexsha[:7],
+                    "author": commit.author.name,
+                    "email": commit.author.email,
+                    "message": commit.message.strip(),
+                    "date": commit_date.strftime("%Y-%m-%d"),
+                    "time": commit_date.strftime("%H:%M"),
+                    "weekday": get_week_day_name(commit_date)
+                }
 
             commits_data.append(commit_info)
 
@@ -210,6 +223,11 @@ def main():
         type=str,
         help="输出到文件（避免控制台编码问题）"
     )
+    parser.add_argument(
+        "--minimal",
+        action="store_true",
+        help="精简模式：只保留必要信息（message、date、weekday），减少 token 消耗"
+    )
 
     args = parser.parse_args()
 
@@ -218,6 +236,7 @@ def main():
     print(f"  - 开始日期：{args.since}")
     print(f"  - 结束日期：{args.until}")
     print(f"  - 输出文件：{args.output if args.output else '（控制台输出）'}")
+    print(f"  - 精简模式：{'是' if args.minimal else '否'}")
     print()
 
     # ===== 新增：输入验证 =====
@@ -254,12 +273,14 @@ def main():
     # 获取所有项目的日志
     print("📥 开始获取 Git 日志...")
     print(f"共 {len(paths)} 个项目")
+    if args.minimal:
+        print("🎯 精简模式已启用（只保留 message、date、weekday）")
     print()
     all_commits = []
 
     for i, path in enumerate(paths, 1):
         print(f"[{i}/{len(paths)}] 正在获取：{path}")
-        commits = get_git_logs(path, args.since, args.until)
+        commits = get_git_logs(path, args.since, args.until, args.minimal)
         print(f"         └─ 找到 {len(commits)} 条提交记录")
         all_commits.extend(commits)
 
@@ -276,6 +297,7 @@ def main():
 
     # 打印每日统计
     print("📅 每日提交统计：")
+    weekday_key = "wd" if args.minimal else "weekday"
     for weekday in ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]:
         count = len(grouped[weekday])
         if count > 0:
@@ -290,12 +312,19 @@ def main():
         print("   2. 项目是否有提交记录")
         print()
 
-    result = {
-        "start_date": args.since,
-        "end_date": args.until,
-        "total_commits": total_commits,
-        "commits_by_day": grouped
-    }
+    # 构建结果（精简模式不包含 start_date、end_date）
+    if args.minimal:
+        result = {
+            "total": total_commits,
+            "by_day": grouped
+        }
+    else:
+        result = {
+            "start_date": args.since,
+            "end_date": args.until,
+            "total_commits": total_commits,
+            "commits_by_day": grouped
+        }
 
     # 输出JSON（到文件或控制台）
     print("💾 正在输出 JSON...")
