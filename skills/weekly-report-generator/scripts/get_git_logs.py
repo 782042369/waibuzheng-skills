@@ -183,8 +183,9 @@ def group_by_weekday(commits: List[Dict]) -> Dict[str, List[Dict]]:
     }
 
     for commit in commits:
-        weekday = commit["weekday"]
-        if weekday in grouped:
+        # 兼容完整模式（weekday）和精简模式（wd）
+        weekday = commit.get("weekday") or commit.get("wd")
+        if weekday and weekday in grouped:
             grouped[weekday].append(commit)
 
     return grouped
