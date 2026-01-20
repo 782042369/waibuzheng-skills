@@ -22,6 +22,15 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
+# 导入公共模块
+try:
+    from .common import fix_windows_console_encoding
+except ImportError:
+    from common import fix_windows_console_encoding
+
+# 修复 Windows 控制台编码问题
+fix_windows_console_encoding()
+
 
 # ========== Markdown → Word 转换器（改进版） ==========
 
@@ -171,9 +180,26 @@ class MarkdownToWordConverter:
 
     def _apply_inline_formatting(self, element, text: str) -> None:
         """应用行内格式（粗体、斜体、代码）"""
-        # 清空元素
         if hasattr(element, 'clear'):
             element.clear()
+
+        # 定义格式模式：{模式: (前缀长度, 属性设置函数)}
+        def _set_bold(run):
+            run.bold = True
+
+        def _set_italic(run):
+            run.italic = True
+
+        def _set_code(run):
+            run.font.name = 'Courier New'
+
+        # 格式映射：模式 -> (前缀长度, 属性设置函数)
+        formats = {
+            '**': (2, _set_bold),
+            '__': (2, _set_bold),
+            '_': (1, _set_italic),
+            '`': (1, _set_code),
+        }
 
         # 解析行内格式
         parts = re.split(r'(\*\*.*?\*\*|__.*?__|_.*?_|\*.*?\*|`.*?`)', text)
@@ -182,28 +208,20 @@ class MarkdownToWordConverter:
             if not part:
                 continue
 
-            # 粗体
-            if (part.startswith('**') and part.endswith('**')) or \
-               (part.startswith('__') and part.endswith('__')):
-                content = part[2:-2]
-                run = element.add_run(content)
-                run.bold = True
+            # 尝试匹配格式
+            matched = False
+            for marker, (prefix_len, setter) in formats.items():
+                if part.startswith(marker) and part.endswith(marker):
+                    # 排除 __ 被 _ 误匹配的情况
+                    if marker == '_' and part.startswith('__'):
+                        continue
+                    content = part[prefix_len:-prefix_len]
+                    run = element.add_run(content)
+                    setter(run)
+                    matched = True
+                    break
 
-            # 斜体
-            elif (part.startswith('_') and part.endswith('_') and not
-                  part.startswith('__')):
-                content = part[1:-1]
-                run = element.add_run(content)
-                run.italic = True
-
-            # 代码
-            elif part.startswith('`') and part.endswith('`'):
-                content = part[1:-1]
-                run = element.add_run(content)
-                run.font.name = 'Courier New'
-
-            # 普通文本
-            else:
+            if not matched:
                 element.add_run(part)
 
 
@@ -364,21 +382,54 @@ def export_report(
         raise ValueError(f"不支持的文件格式：{Path(filename).suffix}，请使用 .md 或 .docx")
 
 
+def _export_and_print(
+    content: str,
+    output_path: str,
+    filename: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str]
+) -> None:
+    """导出周报并打印成功消息"""
+    try:
+        output_file = export_report(
+            content=content,
+            output_path=output_path,
+            filename=filename,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        # 检测输出格式
+        output_format = detect_output_format(Path(output_file).name)
+        format_name = "Word" if output_format == "word" else "Markdown"
+
+        print(f"✅ 已保存 {format_name} 文件到：{output_file}")
+
+    except Exception as e:
+        print(f"❌ 导出失败：{e}")
+        print("提示：请检查输出目录是否存在，或安装 python-docx：pip install python-docx")
+        sys.exit(1)
+
+
 def main():
     """主函数"""
-    print("=" * 60)
-    print("📝 周报导出脚本启动")
-    print("=" * 60)
-    print()
-
     parser = argparse.ArgumentParser(
-        description="将AI生成的周报内容写入文件，支持Markdown/Word格式"
+        description="将AI生成的周报内容写入文件，支持Markdown/Word格式，支持自定义模板"
     )
     parser.add_argument(
         "--content",
         type=str,
-        required=True,
         help="完整的周报内容（AI已生成，Markdown格式）"
+    )
+    parser.add_argument(
+        "--data",
+        type=str,
+        help="JSON 数据文件路径（用于填充 Word 模板）"
+    )
+    parser.add_argument(
+        "--template",
+        type=str,
+        help="模板文件路径（支持 .md、.docx）"
     )
     parser.add_argument(
         "--output",
@@ -404,69 +455,67 @@ def main():
 
     args = parser.parse_args()
 
-    print("📋 输入参数：")
-    print(f"  - 输出目录：{args.output}")
-    print(f"  - 文件名：{args.filename if args.filename else '（自动生成）'}")
-    if args.start_date and args.end_date:
-        print(f"  - 日期范围：{args.start_date} 至 {args.end_date}")
-    content_preview = args.content[:100] + "..." if len(args.content) > 100 else args.content
-    print(f"  - 内容预览：{content_preview}")
-    print()
+    # 检查是否提供了模板
+    if args.template:
+        # 模板模式
+        template_path = Path(args.template)
 
-    # 导出周报
-    print("📤 正在导出周报...")
-    try:
-        # 检测文件名和格式
-        if args.filename:
-            filename = args.filename
-            output_format = detect_output_format(filename)
-            format_name = "Word (.docx)" if output_format == "word" else "Markdown (.md)"
-            print(f"  - 文件名：{filename}")
-            print(f"  - 输出格式：{format_name}")
+        if not template_path.exists():
+            print(f"❌ 模板文件不存在：{args.template}")
+            sys.exit(1)
+
+        # 根据模板类型处理
+        if template_path.suffix.lower() == ".docx":
+            # Word 模板：使用 fill_template.py 填充
+            if not args.data:
+                print("❌ Word 模板需要提供 --data 参数（JSON 数据文件）")
+                sys.exit(1)
+
+            if not args.filename:
+                print("❌ Word 模板需要提供 --filename 参数")
+                sys.exit(1)
+
+            try:
+                # 导入 fill_template 模块
+                import importlib.util
+                fill_template_path = Path(__file__).parent / "fill_template.py"
+                spec = importlib.util.spec_from_file_location("fill_template", fill_template_path)
+                fill_template_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(fill_template_module)
+
+                # 调用填充函数
+                output_file = fill_template_module.fill_word_template(
+                    template_path=args.template,
+                    data_path=args.data,
+                    output_path=args.output,
+                    filename=args.filename
+                )
+
+                print(f"✅ 已填充 Word 模板并保存到：{output_file}")
+
+            except Exception as e:
+                print(f"❌ 填充 Word 模板失败：{e}")
+                print("提示：请检查模板文件和数据文件是否正确")
+                sys.exit(1)
+
+        elif template_path.suffix.lower() == ".md":
+            # Markdown 模板：直接处理内容
+            if not args.content:
+                print("❌ Markdown 模板需要提供 --content 参数")
+                sys.exit(1)
+            _export_and_print(args.content, args.output, args.filename, args.start_date, args.end_date)
+
         else:
-            if not args.start_date or not args.end_date:
-                raise ValueError("未提供文件名时，必须提供 start_date 和 end_date 用于自动生成文件名")
-            filename = generate_auto_filename(args.start_date, args.end_date)
-            print(f"  - 自动生成文件名：{filename}")
-            print(f"  - 输出格式：Markdown (.md)")
+            print(f"❌ 不支持的模板类型：{template_path.suffix}")
+            print("💡 支持的模板类型：.md、.docx")
+            sys.exit(1)
 
-        print()
-
-        output_file = export_report(
-            content=args.content,
-            output_path=args.output,
-            filename=args.filename,
-            start_date=args.start_date,
-            end_date=args.end_date
-        )
-
-        # 获取文件大小
-        file_size = Path(output_file).stat().st_size
-        size_kb = file_size / 1024
-
-        print()
-        print("✅ 周报导出成功")
-        print(f"   文件路径：{output_file}")
-        print(f"   文件大小：{file_size} 字节（{size_kb:.2f} KB）")
-
-    except Exception as e:
-        print()
-        print(f"❌ 导出失败：{e}")
-        print()
-        print("💡 可能的原因：")
-        print("   1. 输出目录不存在或无写入权限")
-        print("   2. Word 格式需要安装 python-docx：pip install python-docx")
-        print("   3. 内容格式不正确")
-        import traceback
-        print()
-        print("详细错误信息：")
-        traceback.print_exc()
-        sys.exit(1)
-
-    print()
-    print("=" * 60)
-    print("✅ 周报导出完成")
-    print("=" * 60)
+    else:
+        # 原有模式：直接导出
+        if not args.content:
+            print("❌ 未提供模板时，必须提供 --content 参数")
+            sys.exit(1)
+        _export_and_print(args.content, args.output, args.filename, args.start_date, args.end_date)
 
 
 if __name__ == "__main__":

@@ -2,44 +2,84 @@
   "metadata": {
     "project_name": "waibuzheng 的 skills 集合库",
     "description": "用于存放多个技能（skills）的集合仓库，每个 skill 都是一个独立的功能模块",
-    "last_updated": "2026-01-15T23:20:35+08:00",
-    "version": "3.0.0",
+    "last_updated": "2026-01-21T01:01:33+08:00",
+    "version": "1.0.0",
     "initialized_by": "Claude Code - AI Context Initializer (skill-creator 标准)"
   },
   "repository": {
     "root_path": "E:\\工作\\study\\waibuzheng-skills",
     "branch": "main",
-    "total_files_estimated": 20,
-    "scanned_files": 20,
+    "total_files_estimated": 30,
+    "scanned_files": 30,
     "coverage_percentage": 100,
     "truncated": false,
-    "git_status": "clean"
+    "git_status": "modified"
   },
   "modules": [
     {
       "name": "weekly-report-generator",
       "path": "skills/weekly-report-generator",
-      "description": "自动化周报生成器，从Git提交记录生成专业工作汇报",
+      "description": "自动化周报生成器，从Git提交记录生成专业工作汇报。支持单周/多周批量生成、多项目汇总、自定义模板（Markdown/Word）",
       "language": "Python",
       "status": "已实现",
       "has_entry": true,
       "has_tests": false,
       "has_interfaces": true,
       "entry_files": [
+        "scripts/orchestrate_reports.py",
         "scripts/get_git_logs.py",
-        "scripts/export_report.py"
+        "scripts/fill_template.py"
       ],
       "important_paths": [
         "skills/weekly-report-generator/SKILL.md",
         "skills/weekly-report-generator/CLAUDE.md",
         "skills/weekly-report-generator/scripts/",
-        "skills/weekly-report-generator/assets/",
         "skills/weekly-report-generator/references/"
       ],
       "dependencies": [
-        "gitpython>=3.1.40",
-        "jinja2>=3.1.2"
-      ]
+        "gitpython==3.1.41",
+        "python-docx==0.8.11"
+      ],
+      "scripts": {
+        "orchestrate_reports": {
+          "file": "scripts/orchestrate_reports.py",
+          "lines": 516,
+          "description": "主编排脚本，一键完成所有准备工作"
+        },
+        "parse_time": {
+          "file": "scripts/parse_time.py",
+          "description": "智能时间解析，支持相对和绝对时间"
+        },
+        "get_git_logs": {
+          "file": "scripts/get_git_logs.py",
+          "lines": 537,
+          "description": "Git日志获取，包含详细的无意义提交过滤逻辑"
+        },
+        "fill_template": {
+          "file": "scripts/fill_template.py",
+          "lines": 354,
+          "description": "Word模板填充，支持多种章节格式"
+        },
+        "export_report": {
+          "file": "scripts/export_report.py",
+          "description": "Markdown周报导出"
+        },
+        "analyze_template": {
+          "file": "scripts/analyze_template.py",
+          "description": "Word模板结构分析"
+        },
+        "common": {
+          "file": "scripts/common.py",
+          "lines": 123,
+          "description": "公共工具模块（编码修复、输入验证等）"
+        }
+      },
+      "references": {
+        "workflow": "references/workflow.md",
+        "api_reference": "references/script-api-reference.md",
+        "examples": "references/examples.md",
+        "report_prompts": "references/report-prompts.md"
+      }
     }
   ],
   "ignored_patterns": [
@@ -87,14 +127,16 @@
     ".env.local",
     ".env.*.local",
     "Thumbs.db",
-    "Desktop.ini"
+    "Desktop.ini",
+    "results/**",
+    "report/**"
   ],
   "gaps": [
     {
       "type": "missing_tests",
-      "description": "现有 skill 缺少单元测试和集成测试",
+      "description": "weekly-report-generator skill 缺少单元测试和集成测试",
       "priority": "medium",
-      "recommendation": "为 weekly-report-generator 添加测试用例，覆盖主要功能路径"
+      "recommendation": "为核心脚本添加测试用例，特别是 parse_time.py、get_git_logs.py、fill_template.py"
     },
     {
       "type": "more_skills",
@@ -103,29 +145,29 @@
       "recommendation": "根据需求添加新的 skills，遵循 Skill 目录结构规范"
     },
     {
-      "type": "test_outputs",
-      "description": "存在测试输出目录 weekly-report-test-outputs，应在 .gitignore 中忽略",
+      "type": "cli_usability",
+      "description": "部分脚本参数命名不一致（如 --paths vs --repos, --since vs --start）",
       "priority": "low",
-      "recommendation": "将 weekly-report-test-outputs/ 添加到 .gitignore"
+      "recommendation": "统一参数命名规范，或在文档中明确说明"
     }
   ],
   "next_steps": [
     "为 weekly-report-generator 添加单元测试",
     "考虑添加更多有用的 skills",
     "完善测试策略和编码规范文档",
-    "清理测试输出目录或添加到 .gitignore"
+    "统一脚本参数命名规范"
   ],
   "statistics": {
     "files_by_language": {
-      "Python": 2,
-      "Markdown": 10,
-      "Text": 1
+      "Python": 7,
+      "Markdown": 5
     },
     "total_modules": 1,
     "documented_modules": 1,
     "modules_with_tests": 0,
     "modules_with_interfaces": 1,
-    "total_documentation_lines": 650
+    "total_documentation_lines": 1200,
+    "total_code_lines": 2000
   },
   "project_structure": {
     "type": "monorepo",
@@ -137,14 +179,16 @@
   "coverage_details": {
     "root_documentation": "已完成",
     "module_documentation": "已完成（1/1）",
-    "script_coverage": "100%（2/2）",
-    "asset_coverage": "100%（1/1 模板，1/1 参考文档）",
+    "script_coverage": "100%（7/7）",
+    "reference_coverage": "100%（4/4）",
     "dependency_tracking": "已完成"
   },
   "scan_summary": {
     "phase_a_completed": true,
     "phase_b_completed": true,
     "phase_c_triggered": false,
-    "reason": "项目规模较小，已实现 100% 覆盖，无需深度补捞"
-  }
+    "reason": "项目规模较小，已实现 100% 覆盖，所有文档已完善，无需深度补捞"
+  },
+  "scan_timestamp": "2026-01-21T01:01:33+08:00",
+  "scanner_version": "1.0.0"
 }

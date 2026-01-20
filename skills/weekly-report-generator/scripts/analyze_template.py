@@ -21,6 +21,15 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
+# 导入公共模块
+try:
+    from .common import fix_windows_console_encoding, extract_variables
+except ImportError:
+    from common import fix_windows_console_encoding, extract_variables
+
+# 修复 Windows 控制台编码问题
+fix_windows_console_encoding()
+
 
 # ========== Word 解析器（改进版） ==========
 
@@ -117,25 +126,8 @@ class WordAnalyzer:
         return sections
 
     def _extract_variables(self, content: str) -> Dict[str, Dict[str, Any]]:
-        """提取变量占位符"""
-        variables = {}
-        variable_pattern = re.compile(r'\{\{(.+?)\}\}')
-
-        # 必需变量列表
-        required_vars = ["起始日期", "结束日期", "工作内容列表", "工作内容", "问题和风险"]
-
-        for match in variable_pattern.finditer(content):
-            placeholder = match.group(0)
-            var_name = match.group(1).strip()
-            is_required = any(req in var_name for req in required_vars)
-
-            variables[placeholder] = {
-                "name": var_name,
-                "description": f"变量：{var_name}",
-                "required": is_required
-            }
-
-        return variables
+        """提取变量占位符（使用公共模块）"""
+        return extract_variables(content)
 
 
 # ========== Markdown 解析器（保持原有） ==========
@@ -203,22 +195,9 @@ def analyze_markdown_template(template_path: str) -> dict:
             else:
                 current_section["content"] = line
 
-    # 提取变量占位符（{{变量名}}）
-    variables = {}
-    variable_pattern = r'\{\{(.+?)\}\}'
-
-    for match in re.finditer(variable_pattern, content):
-        variable_name = match.group(1).strip()
-
-        # 判断是否必需（常见必需变量）
-        required_vars = ["起始日期", "结束日期", "工作内容列表"]
-        is_required = any(req in variable_name for req in required_vars)
-
-        variables[match.group(0)] = {
-            "name": variable_name,
-            "description": f"变量：{variable_name}",
-            "required": is_required
-        }
+    # 提取变量占位符（使用公共模块）
+    required_vars = ["起始日期", "结束日期", "工作内容列表"]
+    variables = extract_variables(content, required_vars)
 
     return {
         "type": "markdown",
@@ -229,20 +208,6 @@ def analyze_markdown_template(template_path: str) -> dict:
         "variables": variables,
         "raw_content": content
     }
-
-
-def analyze_word_template(template_path: str) -> dict:
-    """
-    分析 Word 模板文件（使用新的专业解析器）
-
-    Args:
-        template_path: 模板文件路径
-
-    Returns:
-        结构化数据
-    """
-    analyzer = WordAnalyzer()
-    return analyzer.analyze(template_path)
 
 
 def analyze_template(template_path: str) -> dict:
@@ -271,7 +236,8 @@ def analyze_template(template_path: str) -> dict:
     if suffix == ".md":
         return analyze_markdown_template(template_path)
     elif suffix == ".docx":
-        return analyze_word_template(template_path)
+        analyzer = WordAnalyzer()
+        return analyzer.analyze(template_path)
     else:
         return {
             "type": "unknown",

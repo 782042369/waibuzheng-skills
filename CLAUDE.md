@@ -1,6 +1,6 @@
 # waibuzheng 的 Skills 集合库
 
-> 最后更新：2026-01-15 23:20:35
+> 最后更新：2026-01-21 01:01:33
 
 ## 项目愿景
 
@@ -27,19 +27,25 @@ graph TD
     B --> C["weekly-report-generator<br/>周报生成器"];
 
     C --> D["scripts/"];
-    C --> E["assets/"];
     C --> F["references/"];
 
     D --> D1["get_git_logs.py<br/>获取Git日志"];
-    D --> D2["export_report.py<br/>导出周报"];
-    E --> E1["templates/<br/>周报模板"];
-    F --> F1["report-prompts.md<br/>内容规范"];
+    D --> D2["fill_template.py<br/>填充Word模板"];
+    D --> D3["parse_time.py<br/>智能时间解析"];
+    D --> D4["orchestrate_reports.py<br/>编排脚本"];
+    D --> D5["export_report.py<br/>导出Markdown周报"];
+    D --> D6["analyze_template.py<br/>解析模板结构"];
+    D --> D7["common.py<br/>公共工具"];
+
+    F --> F1["workflow.md<br/>工作流程指南"];
+    F --> F2["script-api-reference.md<br/>脚本API参考"];
+    F --> F3["examples.md<br/>使用示例"];
+    F --> F4["report-prompts.md<br/>内容清洗规则"];
 
     G["(未来) 更多 skills"] -.-> B;
 
     click C "./skills/weekly-report-generator/CLAUDE.md" "查看周报生成器文档"
     click D "./skills/weekly-report-generator/scripts/" "查看脚本"
-    click E "./skills/weekly-report-generator/assets/" "查看资源"
     click F "./skills/weekly-report-generator/references/" "查看参考文档"
 
     style A fill:#e1f5ff,stroke:#01579b,stroke-width:3px
@@ -52,11 +58,11 @@ graph TD
 
 | 模块路径 | 职责描述 | 语言 | 状态 | 文档 |
 |---------|---------|------|------|------|
-| `skills/weekly-report-generator` | 自动化周报生成器，从Git提交记录生成专业工作汇报 | Python | 已实现 | [查看](./skills/weekly-report-generator/CLAUDE.md) |
+| `skills/weekly-report-generator` | 自动化周报生成器，从Git提交记录生成专业工作汇报。支持单周/多周批量生成、多项目汇总、自定义模板（Markdown/Word） | Python | 已实现 | [查看](./skills/weekly-report-generator/CLAUDE.md) |
 
 ## 如何添加新的 Skill
 
-### 🚀 快速方法（推荐）
+### 快速方法（推荐）
 
 **直接告诉 Claude**：
 ```
@@ -69,7 +75,7 @@ Claude 会自动：
 3. 添加必要的脚本和模板
 4. 更新根级文档
 
-### 📋 Skill 最小结构
+### Skill 最小结构
 
 ```
 skills/your-skill-name/
@@ -164,27 +170,3 @@ skills/your-skill-name/
 2. 再阅读 `CLAUDE.md` 了解实现细节
 3. 遵循 Skill 目录结构规范
 4. 确保添加必要的文档
-
-## 变更记录
-
-### 2026-01-15 23:20:35
-- **重大更新**：重新初始化项目为标准的 skills 集合库
-- 使用 skill-creator 标准重构项目文档
-- 完善模块结构图（Mermaid）
-- 更新索引配置和覆盖率统计
-- 添加完整的模块导航和面包屑
-- 修复快速开始指南中的路径错误
-
-### 2026-01-15 21:58:03
-- **重大更新**：项目从"周报生成器"转变为"waibuzheng 的 skills 集合库"
-- 更新根级 CLAUDE.md 为 skills 集合库说明
-- 添加模块结构图（Mermaid）
-- 添加如何添加新 Skill 的规范说明
-- 将 `weekly-report-generator` 重构为独立的 skill 模块
-- 创建 `skills/weekly-report-generator/CLAUDE.md` 详细文档
-
-### 2026-01-15 20:46:09
-- 初始化项目 AI 上下文
-- 创建根级 CLAUDE.md
-- 添加 .gitignore 文件
-- 创建 .claude/index.json 索引

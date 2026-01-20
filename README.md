@@ -1,6 +1,6 @@
 # waibuzheng 的 Skills 集合库
 
-> 最后更新：2026-01-16 14:20:00
+> 最后更新：2026-01-20 18:00:00
 
 ## 📖 项目简介
 
@@ -114,7 +114,7 @@ skills/your-skill-name/
 ├── README.md                     # 使用说明（推荐）
 ├── requirements.txt              # Python 依赖
 ├── scripts/                      # 核心脚本
-├── assets/                       # 资源文件（可选）
+├── /                       # 资源文件（可选）
 │   └── templates/
 └── references/                   # 参考文档（可选）
 ```
@@ -156,12 +156,18 @@ waibuzheng-skills/
     │   ├── CLAUDE.md           # AI 上下文
     │   ├── README.md           # 使用说明
     │   ├── requirements.txt    # 依赖清单
-    │   ├── scripts/            # 核心脚本
-    │   │   ├── get_git_logs.py
-    │   │   ├── export_report.py
-    │   │   └── analyze_template.py
+    │   ├── scripts/            # 核心脚本（7个）
+    │   │   ├── parse_time.py           # 智能时间解析 ⭐ 新增
+    │   │   ├── get_git_logs.py         # 获取 Git 日志
+    │   │   ├── export_report.py        # 导出 Markdown 周报
+    │   │   ├── fill_template.py        # 填充 Word 模板
+    │   │   ├── analyze_template.py     # 解析模板结构
+    │   │   ├── calculate_weeks.py      # 计算周数（已废弃）
+    │   │   └── update_task_status.py   # 更新任务状态
     │   └── references/         # 参考文档
-    │       └── report-prompts.md
+    │       ├── script-api-reference.md  # 脚本 API 参考手册
+    │       ├── subtask-workflow.md      # 子任务工作流程
+    │       └── report-prompts.md        # 内容清洗规范
     └── [future skills...]
 ```
 
@@ -186,8 +192,8 @@ waibuzheng-skills/
 
 ## 📊 项目状态
 
-- **版本**：3.0.0
-- **最后更新**：2026-01-16
+- **版本**：1.0.0
+- **最后更新**：2026-01-20
 - **Skills 数量**：1
 - **文档覆盖率**：100%
 - **测试覆盖率**：待完善
@@ -201,15 +207,23 @@ waibuzheng-skills/
 
 ## 📝 变更记录
 
-### 2026-01-16
-- ✨ 新增 `analyze_template.py` 脚本，支持分析 Markdown 和 Word 模板
-- ✨ 新增 `README.md` 文档，提供快速开始指南
-- ♻️ 重构 `export_report.py`，支持自动检测文件格式
-- ♻️ 重构 `get_git_logs.py`，改进错误处理
-- 📝 更新文档，清理测试输出目录
-- 📦 更新依赖版本要求
+### 2026-01-20 - v1.0.0
+- ✨ **重大更新**：新增 `parse_time.py` 智能时间解析脚本
+  - 支持相对时间表达（本周/上周/本月/上月/本年/去年）
+  - 支持绝对时间范围（YYYY-MM-DD-YYYY-MM-DD）
+  - 支持单个日期并自动计算所在周（YYYY-MM-DD）
+  - 按自然周（周一到周日）划分时间范围
+  - Windows 环境友好，UTF-8 编码支持
+- ♻️ **架构重构**：主子智能体职责分离
+  - 主智能体：只做数据准备和验证，不创建文件
+  - 子智能体：独立完成所有工作，创建临时文件和周报文件
+- 📝 **文档完善**：
+  - 重写 `SKILL.md`，明确主子智能体职责划分
+  - 更新 `script-api-reference.md`，添加 parse_time.py API 文档
+  - 更新项目架构图，标注新增脚本
+- 🗑️ **废弃标记**：`calculate_weeks.py` 已废弃，推荐使用 `parse_time.py`
 
-### 2026-01-15
+### 2026-01-16 - v3.0.0
 - 🎉 项目初始化，创建 monorepo 结构
 - ✨ 实现 `weekly-report-generator` skill
 - 📝 编写完整的项目文档
