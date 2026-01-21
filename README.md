@@ -40,33 +40,20 @@ cd waibuzheng-skills
 cp .claude/skills/weekly-report-generator ～/.claude/skills
 ```
 
-2. **安装特定 skill 的依赖**
+2. **使用 skill**
 ```bash
-# 例如：安装周报生成器的依赖
-cd skills/weekly-report-generator
-pip install -r requirements.txt
+启动claude
+weekly-report-generator
+项目路径：仓库1,仓库2 、（单项目的话：仓库1）
+时间范围：`本周、上周、本月、上月、本年、去年、YYYY-MM-DD 或 YYYY-MM-DD-YYYY-MM-DD`
+命名规则：xx第一周周报 xxx第二周周报
+模版: xxx/report.docx 绝对路径
+输出路径: xxx/results 绝对路径
 ```
 
 3. **使用 skill**
 - 参考 skill 的 `SKILL.md` 文档
 - 按照工作流程使用
-
-**示例 - 周报生成器**：
-```bash
-# 1. 获取 Git 日志
-python scripts/get_git_logs.py \
-  --paths "/path/to/project" \
-  --since "2025-01-13" \
-  --until "2025-01-17"
-
-# 2. AI 清洗内容（基于 references/report-prompts.md）
-
-# 3. 导出周报
-python scripts/export_report.py \
-  --content "清洗后的内容" \
-  --output "./output" \
-  --filename "周报.md"
-```
 
 ## 📚 如何添加新的 Skill
 
@@ -159,7 +146,6 @@ waibuzheng-skills/
 - **最后更新**：2026-01-20
 - **Skills 数量**：1
 - **文档覆盖率**：100%
-- **测试覆盖率**：待完善
 
 ## 🛠️ 技术栈
 

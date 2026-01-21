@@ -42,6 +42,59 @@ E:\周报\2025年1月\
 - 不提供 `--template` 参数：使用默认的Markdown格式
 - 不提供 `--format` 参数：默认使用 `md` 格式
 
+### AI 执行步骤（完整示例）
+
+**Step 1: 创建任务清单**
+```
+TodoWrite(
+  todos = [
+    {"content": "读取调用说明和参考文档", "status": "pending", "activeForm": "读取调用说明和参考文档"},
+    {"content": "生成第1周周报", "status": "pending", "activeForm": "生成第1周周报"},
+    {"content": "生成第2周周报", "status": "pending", "activeForm": "生成第2周周报"},
+    {"content": "生成第3周周报", "status": "pending", "activeForm": "生成第3周周报"},
+    {"content": "生成第4周周报", "status": "pending", "activeForm": "生成第4周周报"},
+    {"content": "生成第5周周报", "status": "pending", "activeForm": "生成第5周周报"},
+    {"content": "汇总结果并清理临时文件", "status": "pending", "activeForm": "汇总结果并清理临时文件"}
+  ]
+)
+```
+
+**Step 2: 读取调用说明并标记第一个任务**
+```
+# 标记 "读取调用说明和参考文档" 为 in_progress
+# 读取 E:\周报\2025年1月\tmp\claude_instruction.md
+# 标记为 completed
+```
+
+**Step 3: 并行启动所有子智能体**
+```
+# 在同一个响应中调用5次 Task 工具，每个周一次
+
+Task(
+  subagent_type="general-purpose",
+  prompt="...第1周的任务提示...",
+  description="生成第1周周报"
+)
+# 标记 "生成第1周周报" 为 in_progress → completed
+
+Task(
+  subagent_type="general-purpose",
+  prompt="...第2周的任务提示...",
+  description="生成第2周周报"
+)
+# 标记 "生成第2周周报" 为 in_progress → completed
+
+# ... 第3、4、5周同理
+```
+
+**Step 4: 汇总结果并清理**
+```
+# 标记 "汇总结果并清理临时文件" 为 in_progress
+# 收集所有子任务结果
+# 删除成功的临时文件
+# 标记为 completed
+```
+
 ---
 
 ## 示例2：使用Word模板

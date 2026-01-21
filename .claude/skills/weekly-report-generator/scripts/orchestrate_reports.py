@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-周报生成编排脚本
-
-功能：
-- 一键完成周报生成的所有准备工作
-- 自动解析时间、验证路径、分析模板
-- 为每个周生成独立的任务配置文件
-- 生成主调用提示（供 Claude Code 执行）
+"""周报生成编排脚本
 
 作者：老王
 日期：2026-01-21
@@ -20,29 +13,16 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import subprocess
 
-# 导入公共模块
 try:
     from .common import fix_windows_console_encoding, validate_repo_path
 except ImportError:
     from common import fix_windows_console_encoding, validate_repo_path
 
-# 修复 Windows 控制台编码问题
 fix_windows_console_encoding()
 
 
-# ========== 辅助函数 ==========
-
 def run_parse_time(expression: str, output_path: str) -> Dict[str, Any]:
-    """
-    调用 parse_time.py 解析时间
-
-    Args:
-        expression: 时间表达式
-        output_path: 输出JSON文件路径
-
-    Returns:
-        解析结果字典
-    """
+    """调用 parse_time.py 解析时间"""
     script_path = Path(__file__).parent / "parse_time.py"
     cmd = [
         sys.executable,
@@ -57,22 +37,12 @@ def run_parse_time(expression: str, output_path: str) -> Dict[str, Any]:
         print(f"❌ 时间解析失败：{result.stderr}")
         sys.exit(1)
 
-    # 读取结果
     with open(output_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def run_analyze_template(template_path: str, output_path: str) -> Optional[Dict[str, Any]]:
-    """
-    调用 analyze_template.py 分析模板
-
-    Args:
-        template_path: 模板文件路径
-        output_path: 输出JSON文件路径
-
-    Returns:
-        模板结构字典（如果模板存在）
-    """
+    """调用 analyze_template.py 分析模板"""
     script_path = Path(__file__).parent / "analyze_template.py"
     cmd = [
         sys.executable,
@@ -87,21 +57,12 @@ def run_analyze_template(template_path: str, output_path: str) -> Optional[Dict[
         print(f"❌ 模板分析失败：{result.stderr}")
         sys.exit(1)
 
-    # 读取结果
     with open(output_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def validate_project_paths(paths: List[str]) -> None:
-    """
-    验证所有项目路径
-
-    Args:
-        paths: 项目路径列表
-
-    Raises:
-        SystemExit: 如果路径无效
-    """
+    """验证所有项目路径"""
     errors = []
 
     for path in paths:
@@ -119,21 +80,10 @@ def validate_project_paths(paths: List[str]) -> None:
 
 
 def validate_output_path(output_path: str) -> Path:
-    """
-    验证输出路径并创建tmp子目录
-
-    Args:
-        output_path: 输出路径
-
-    Returns:
-        tmp目录的Path对象
-    """
+    """验证输出路径并创建tmp子目录"""
     output = Path(output_path)
-
-    # 创建输出目录
     output.mkdir(parents=True, exist_ok=True)
 
-    # 创建tmp子目录
     tmp_dir = output / "tmp"
     tmp_dir.mkdir(exist_ok=True)
 
@@ -141,19 +91,10 @@ def validate_output_path(output_path: str) -> Path:
 
 
 def extract_required_sections(template_structure: Dict[str, Any]) -> List[str]:
-    """
-    从模板结构中提取需要补充的章节
-
-    Args:
-        template_structure: 模板结构字典
-
-    Returns:
-        需要补充的章节列表
-    """
+    """从模板结构中提取需要补充的章节"""
     required_sections = []
     variables = template_structure.get("variables", {})
 
-    # 检查各个变量是否存在
     if "future_plan" in variables or "下周计划" in variables:
         required_sections.append("future_plan")
     if "summary" in variables or "本周总结" in variables:
@@ -173,21 +114,7 @@ def generate_week_tasks(
     template_structure: Optional[Dict[str, Any]],
     required_sections: List[str]
 ) -> List[Dict[str, Any]]:
-    """
-    为每个周生成任务配置文件
-
-    Args:
-        weeks: 周列表
-        project_paths: 项目路径列表
-        output_path: 输出路径
-        template_path: 模板路径（可选）
-        output_format: 输出格式
-        template_structure: 模板结构（可选）
-        required_sections: 需要补充的章节
-
-    Returns:
-        任务列表
-    """
+    """为每个周生成任务配置文件"""
     tasks = []
 
     for week_info in weeks:
@@ -195,7 +122,6 @@ def generate_week_tasks(
         start_date = week_info["start"]
         end_date = week_info["end"]
 
-        # 生成任务配置
         task_config = {
             "week": week_num,
             "start_date": start_date,
@@ -211,7 +137,6 @@ def generate_week_tasks(
             }
         }
 
-        # 保存任务配置
         task_file = output_path / "tmp" / f"week_{week_num}-task.json"
         with open(task_file, "w", encoding="utf-8") as f:
             json.dump(task_config, f, ensure_ascii=False, indent=2)
@@ -229,44 +154,27 @@ def print_confirmation(
     output_format: str,
     required_sections: List[str]
 ) -> None:
-    """
-    打印二次确认信息
-
-    Args:
-        time_result: 时间解析结果
-        project_paths: 项目路径列表
-        template_path: 模板路径
-        output_path: 输出路径
-        output_format: 输出格式
-        required_sections: 需要补充的章节
-    """
+    """打印二次确认信息"""
     print("\n⏳ 准备工作完成！请确认以下信息：\n")
 
-    # 时间范围
     description = time_result.get("description", "")
     print(f"📅 时间范围: {description}")
 
-    # 生成周报数
     total_weeks = time_result.get("total_weeks", 0)
     print(f"📊 生成周报: {total_weeks}份")
 
-    # 项目路径
     print(f"📁 项目路径: ({len(project_paths)}个)")
     for i, path in enumerate(project_paths, 1):
         print(f"   {i}. {path}")
 
-    # 模板文件
     if template_path:
         print(f"📄 模板文件: {template_path}")
 
-    # 输出路径
     print(f"💾 输出路径: {output_path}")
 
-    # 输出格式
     format_name = "Markdown (.md)" if output_format == ".md" else "Word (.docx)"
     print(f"📝 输出格式: {format_name}")
 
-    # 需要补充的章节
     if required_sections:
         section_names = {
             "future_plan": "下周工作计划",
@@ -283,13 +191,7 @@ def generate_claude_call_instruction(
     output_path: Path,
     tasks: List[Dict[str, Any]]
 ) -> None:
-    """
-    生成 Claude Code 调用说明
-
-    Args:
-        output_path: 输出路径
-        tasks: 任务列表
-    """
+    """生成 Claude Code 调用说明"""
     instruction_file = output_path / "tmp" / "claude_instruction.md"
 
     content = """# 周报生成任务
@@ -363,8 +265,6 @@ def generate_claude_call_instruction(
     print()
 
 
-# ========== 主函数 ==========
-
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(
@@ -426,27 +326,22 @@ def main():
     print("=" * 60)
     print()
 
-    # 解析项目路径
     project_paths = [p.strip() for p in args.paths.split(",")]
 
-    # 验证项目路径
     print("🔍 验证项目路径...")
     validate_project_paths(project_paths)
     print(f"✅ 所有项目路径有效")
 
-    # 验证输出路径
     print("🔍 验证输出路径...")
     tmp_dir = validate_output_path(args.output)
     print(f"✅ 输出路径有效: {args.output}")
     print(f"✅ 临时目录已创建: {tmp_dir}")
 
-    # 解析时间
     print("⏳ 解析时间表达式...")
     time_result_path = tmp_dir / "time_result.json"
     time_result = run_parse_time(args.time, str(time_result_path))
     print(f"✅ 时间解析成功: {time_result['description']}")
 
-    # 分析模板（如果提供）
     template_structure = None
     required_sections = []
 
@@ -456,14 +351,12 @@ def main():
         template_structure = run_analyze_template(args.template, str(template_structure_path))
         print(f"✅ 模板分析成功")
 
-        # 提取需要补充的章节
         required_sections = extract_required_sections(template_structure)
         if required_sections:
             print(f"✅ 检测到需要补充的章节: {required_sections}")
     else:
         print("⏭️  未提供模板，跳过分析")
 
-    # 生成周任务配置
     print("📋 生成周任务配置...")
     weeks = time_result["weeks"]
     output_format_ext = f".{args.format}"
@@ -481,7 +374,6 @@ def main():
     print(f"✅ 已生成 {len(tasks)} 个周任务配置")
     print()
 
-    # 二次确认
     if not args.no_confirm:
         print_confirmation(
             time_result=time_result,
@@ -497,7 +389,6 @@ def main():
             print("❌ 已取消")
             sys.exit(0)
 
-    # 生成 Claude Code 调用说明
     print("📝 生成 Claude Code 调用说明...")
     generate_claude_call_instruction(Path(args.output), tasks)
 

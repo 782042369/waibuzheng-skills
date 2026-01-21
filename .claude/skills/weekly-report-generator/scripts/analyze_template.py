@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-模板分析脚本
-
-功能：
-- 分析 Markdown、Word 模板文件
-- 提取模板结构（标题、章节、段落）
-- 识别变量占位符（{{变量名}}）
-- 返回结构化数据供 AI 使用
-- 使用专业的 Word 解析器
+"""模板分析脚本
 
 作者：老王
 日期：2026-01-16
@@ -21,34 +13,22 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-# 导入公共模块
 try:
     from .common import fix_windows_console_encoding, extract_variables
 except ImportError:
     from common import fix_windows_console_encoding, extract_variables
 
-# 修复 Windows 控制台编码问题
 fix_windows_console_encoding()
 
 
-# ========== Word 解析器（改进版） ==========
-
 class WordAnalyzer:
-    """Word 文档分析器（专业版）"""
+    """Word 文档分析器"""
 
     def __init__(self):
         self.elements = []
 
     def analyze(self, doc_path: str) -> Dict[str, Any]:
-        """
-        分析 Word 文档
-
-        Args:
-            doc_path: Word 文档路径
-
-        Returns:
-            结构化数据
-        """
+        """分析 Word 文档"""
         try:
             from docx import Document
         except ImportError:
@@ -67,16 +47,9 @@ class WordAnalyzer:
                 "raw_content": ""
             }
 
-        # 提取所有文本
         content = "\n".join([para.text for para in doc.paragraphs])
-
-        # 提取标题（第一个段落或第一个标题）
         title = self._extract_title(doc)
-
-        # 提取章节结构
         sections = self._extract_sections(doc)
-
-        # 提取变量
         variables = self._extract_variables(content)
 
         return {
@@ -91,12 +64,10 @@ class WordAnalyzer:
 
     def _extract_title(self, doc) -> str:
         """提取文档标题"""
-        # 优先找标题样式的段落
         for para in doc.paragraphs:
             if para.style.name.startswith("Heading") and para.text.strip():
                 return para.text.strip()
 
-        # 其次找第一个非空段落
         for para in doc.paragraphs:
             if para.text.strip():
                 return para.text.strip()
@@ -130,30 +101,10 @@ class WordAnalyzer:
         return extract_variables(content)
 
 
-# ========== Markdown 解析器（保持原有） ==========
-
-
 def analyze_markdown_template(template_path: str) -> dict:
-    """
-    分析 Markdown 模板文件
-
-    Args:
-        template_path: 模板文件路径
-
-    Returns:
-        {
-            "type": "markdown",
-            "structure": {
-                "title": "模板标题",
-                "sections": [...]
-            },
-            "variables": {...},
-            "raw_content": "..."
-        }
-    """
+    """分析 Markdown 模板文件"""
     template_path = Path(template_path)
 
-    # 读取文件内容
     try:
         with open(template_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -164,13 +115,11 @@ def analyze_markdown_template(template_path: str) -> dict:
             "raw_content": ""
         }
 
-    # 提取标题（第一行 # 开头的）
     title = ""
     title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
     if title_match:
         title = title_match.group(1).strip()
 
-    # 提取章节结构
     sections = []
     section_pattern = r'^(#{1,6})\s+(.+?)$'
 
@@ -178,7 +127,7 @@ def analyze_markdown_template(template_path: str) -> dict:
     for line in content.split('\n'):
         match = re.match(section_pattern, line)
         if match:
-            level = len(match.group(1))  # # 的数量
+            level = len(match.group(1))
             title_section = match.group(2).strip()
 
             section = {
@@ -189,13 +138,11 @@ def analyze_markdown_template(template_path: str) -> dict:
             sections.append(section)
             current_section = section
         elif current_section:
-            # 添加内容到当前章节
             if current_section["content"]:
                 current_section["content"] += "\n" + line
             else:
                 current_section["content"] = line
 
-    # 提取变量占位符（使用公共模块）
     required_vars = ["起始日期", "结束日期", "工作内容列表"]
     variables = extract_variables(content, required_vars)
 
@@ -211,18 +158,9 @@ def analyze_markdown_template(template_path: str) -> dict:
 
 
 def analyze_template(template_path: str) -> dict:
-    """
-    分析模板文件（自动检测文件类型）
-
-    Args:
-        template_path: 模板文件路径
-
-    Returns:
-        结构化数据
-    """
+    """分析模板文件（自动检测文件类型）"""
     template_path = Path(template_path)
 
-    # 检查文件是否存在
     if not template_path.exists():
         return {
             "type": "unknown",
@@ -230,7 +168,6 @@ def analyze_template(template_path: str) -> dict:
             "raw_content": ""
         }
 
-    # 根据文件扩展名选择分析方法
     suffix = template_path.suffix.lower()
 
     if suffix == ".md":
@@ -275,13 +212,11 @@ def main():
     print(f"  - 输出文件：{args.output if args.output else '（控制台输出）'}")
     print()
 
-    # 检查文件是否存在
     template_path = Path(args.template)
     if not template_path.exists():
         print(f"❌ 错误：文件不存在：{args.template}")
         sys.exit(1)
 
-    # 检测文件类型
     suffix = template_path.suffix.lower()
     print(f"📄 检测文件类型：{suffix}")
     print()
@@ -291,11 +226,9 @@ def main():
         print("💡 支持的文件类型：.md、.docx")
         sys.exit(1)
 
-    # 分析模板
     print("⏳ 正在分析模板...")
     result = analyze_template(args.template)
 
-    # 检查是否有错误
     if "error" in result:
         print(f"❌ 分析失败：{result['error']}")
         sys.exit(1)
@@ -303,7 +236,6 @@ def main():
     print("✅ 模板分析成功")
     print()
 
-    # 打印分析结果摘要
     print("📊 分析结果摘要：")
     print(f"  - 文件类型：{result['type']}")
     if result['type'] != 'unknown':
@@ -318,7 +250,7 @@ def main():
 
         if sections:
             print("  - 章节列表：")
-            for section in sections[:5]:  # 只显示前 5 个
+            for section in sections[:5]:
                 indent = "  " * (section['level'])
                 print(f"    {indent}- {section['title']}")
             if len(sections) > 5:
@@ -331,12 +263,10 @@ def main():
                 print(f"    {i}. {placeholder} ({required})")
     print()
 
-    # 输出结果
     print("💾 正在输出 JSON...")
     json_str = json.dumps(result, ensure_ascii=False, indent=2)
 
     if args.output:
-        # 输出到文件
         print(f"   写入文件：{args.output}")
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -345,7 +275,6 @@ def main():
         print(f"✅ 分析结果已保存到：{output_path}")
         print(f"   文件大小：{len(json_str)} 字节")
     else:
-        # 打印到控制台
         print("   输出到控制台")
         print()
         print("-" * 60)

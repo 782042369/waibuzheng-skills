@@ -13,6 +13,7 @@ description: "从Git提交记录生成专业工作周报。支持单周/多周�
 - **精简输出**：只输出提交消息数组，不包含冗余信息
 - **只读Git日志**：禁止读取项目源代码文件
 - **必须内容清洗**：技术术语转换为业务语言（AI执行，不可跳过）
+- **任务管理**：使用 TodoWrite 工具创建任务清单，追踪每个周报的生成状态
 
 ## 快速开始
 
@@ -48,18 +49,33 @@ python scripts/orchestrate_reports.py \
 
 ### Step 2: 并行处理每个周报（AI 执行）
 
+**创建任务清单**（必须）：
+```python
+# 使用 TodoWrite 工具创建任务清单
+todos = [
+  {"content": "读取调用说明和参考文档", "status": "pending", "activeForm": "读取调用说明和参考文档"},
+  {"content": "为第1周启动子智能体", "status": "pending", "activeForm": "为第1周启动子智能体"},
+  {"content": "为第2周启动子智能体", "status": "pending", "activeForm": "为第2周启动子智能体"},
+  # ... 为每个周创建一个任务
+  {"content": "汇总所有结果并清理临时文件", "status": "pending", "activeForm": "汇总所有结果并清理临时文件"}
+]
+```
+
 **读取参考文档**：
 - **处理周报前**：读取 `references/report-prompts.md` 了解内容清洗规则
 - **需要脚本参数**：读取 `references/script-api-reference.md` 查看详细参数
 
 **工作流程**：
 
-1. **读取调用说明**：`{输出路径}/tmp/claude_instruction.md`
+1. **读取调用说明**：`{输出路径}/tmp/claude_instruction.md`（标记第一个任务为 in_progress）
 2. **并行启动子智能体**：使用 Task 工具为每个周启动独立的 general-purpose 子智能体
-3. **汇总结果**：收集所有子任务的成功/失败状态
-4. **清理临时文件**：删除成功的临时文件，保留失败的用于调试
+   - 📘 **调用方法**：参考 `references/workflow.md` 第 2.2 节的详细示例
+   - 在同一个响应中调用多次 Task 工具实现并行处理
+   - 为每个子任务标记状态（启动时 → in_progress，完成时 → completed）
+3. **汇总结果**：收集所有子任务的成功/失败状态（标记为 in_progress）
+4. **清理临时文件**：删除成功的临时文件，保留失败的用于调试（标记为 completed）
 
-**完整的工作流程和子智能体提示模板**：📘 **[workflow.md](references/workflow.md)**
+**完整的工作流程和 Task 工具调用示例**：📘 **[workflow.md](references/workflow.md)**
 
 ## 参考文档
 

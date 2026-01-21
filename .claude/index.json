@@ -133,12 +133,6 @@
   ],
   "gaps": [
     {
-      "type": "missing_tests",
-      "description": "weekly-report-generator skill 缺少单元测试和集成测试",
-      "priority": "medium",
-      "recommendation": "为核心脚本添加测试用例，特别是 parse_time.py、get_git_logs.py、fill_template.py"
-    },
-    {
       "type": "more_skills",
       "description": "当前只有 1 个 skill，可以添加更多 skills",
       "priority": "low",
@@ -152,9 +146,8 @@
     }
   ],
   "next_steps": [
-    "为 weekly-report-generator 添加单元测试",
     "考虑添加更多有用的 skills",
-    "完善测试策略和编码规范文档",
+    "完善编码规范文档",
     "统一脚本参数命名规范",
     "更新 README.md 中的路径引用（skills/ → .claude/skills/）"
   ],
