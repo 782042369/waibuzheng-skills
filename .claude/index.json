@@ -2,23 +2,23 @@
   "metadata": {
     "project_name": "waibuzheng 的 skills 集合库",
     "description": "用于存放多个技能（skills）的集合仓库，每个 skill 都是一个独立的功能模块",
-    "last_updated": "2026-01-21T01:01:33+08:00",
+    "last_updated": "2026-01-21T08:59:54+08:00",
     "version": "1.0.0",
     "initialized_by": "Claude Code - AI Context Initializer (skill-creator 标准)"
   },
   "repository": {
-    "root_path": "E:\\工作\\study\\waibuzheng-skills",
+    "root_path": "/Users/yanghongxuan/study/my-projects/waibuzheng-skills",
     "branch": "main",
-    "total_files_estimated": 30,
-    "scanned_files": 30,
+    "total_files_estimated": 21,
+    "scanned_files": 21,
     "coverage_percentage": 100,
     "truncated": false,
-    "git_status": "modified"
+    "git_status": "clean"
   },
   "modules": [
     {
       "name": "weekly-report-generator",
-      "path": "skills/weekly-report-generator",
+      "path": ".claude/skills/weekly-report-generator",
       "description": "自动化周报生成器，从Git提交记录生成专业工作汇报。支持单周/多周批量生成、多项目汇总、自定义模板（Markdown/Word）",
       "language": "Python",
       "status": "已实现",
@@ -31,10 +31,10 @@
         "scripts/fill_template.py"
       ],
       "important_paths": [
-        "skills/weekly-report-generator/SKILL.md",
-        "skills/weekly-report-generator/CLAUDE.md",
-        "skills/weekly-report-generator/scripts/",
-        "skills/weekly-report-generator/references/"
+        ".claude/skills/weekly-report-generator/SKILL.md",
+        ".claude/skills/weekly-report-generator/CLAUDE.md",
+        ".claude/skills/weekly-report-generator/scripts/",
+        ".claude/skills/weekly-report-generator/references/"
       ],
       "dependencies": [
         "gitpython==3.1.41",
@@ -142,46 +142,50 @@
       "type": "more_skills",
       "description": "当前只有 1 个 skill，可以添加更多 skills",
       "priority": "low",
-      "recommendation": "根据需求添加新的 skills，遵循 Skill 目录结构规范"
+      "recommendation": "根据需求添加新的 skills，遵循 Skill 目录结构规范（.claude/skills/your-skill/）"
     },
     {
-      "type": "cli_usability",
-      "description": "部分脚本参数命名不一致（如 --paths vs --repos, --since vs --start）",
+      "type": "documentation_update",
+      "description": "README.md 中的 skills/ 路径需要更新为 .claude/skills/",
       "priority": "low",
-      "recommendation": "统一参数命名规范，或在文档中明确说明"
+      "recommendation": "更新 README.md 中的路径引用"
     }
   ],
   "next_steps": [
     "为 weekly-report-generator 添加单元测试",
     "考虑添加更多有用的 skills",
     "完善测试策略和编码规范文档",
-    "统一脚本参数命名规范"
+    "统一脚本参数命名规范",
+    "更新 README.md 中的路径引用（skills/ → .claude/skills/）"
   ],
   "statistics": {
     "files_by_language": {
       "Python": 7,
-      "Markdown": 5
+      "Markdown": 7,
+      "JSON": 1
     },
     "total_modules": 1,
     "documented_modules": 1,
     "modules_with_tests": 0,
     "modules_with_interfaces": 1,
-    "total_documentation_lines": 1200,
+    "total_documentation_lines": 1500,
     "total_code_lines": 2000
   },
   "project_structure": {
     "type": "monorepo",
     "organization": "skills-based",
     "root_documentation": "CLAUDE.md",
-    "module_documentation_pattern": "skills/*/CLAUDE.md",
-    "skill_standard": "skill-creator"
+    "module_documentation_pattern": ".claude/skills/*/CLAUDE.md",
+    "skill_standard": "skill-creator",
+    "skills_location": ".claude/skills/"
   },
   "coverage_details": {
     "root_documentation": "已完成",
     "module_documentation": "已完成（1/1）",
     "script_coverage": "100%（7/7）",
     "reference_coverage": "100%（4/4）",
-    "dependency_tracking": "已完成"
+    "dependency_tracking": "已完成",
+    "mermaid_diagram": "已添加"
   },
   "scan_summary": {
     "phase_a_completed": true,
@@ -189,6 +193,6 @@
     "phase_c_triggered": false,
     "reason": "项目规模较小，已实现 100% 覆盖，所有文档已完善，无需深度补捞"
   },
-  "scan_timestamp": "2026-01-21T01:01:33+08:00",
+  "scan_timestamp": "2026-01-21T08:59:54+08:00",
   "scanner_version": "1.0.0"
 }

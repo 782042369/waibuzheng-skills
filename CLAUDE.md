@@ -1,6 +1,6 @@
 # waibuzheng 的 Skills 集合库
 
-> 最后更新：2026-01-21 01:01:33
+> 最后更新：2026-01-21 08:59:54
 
 ## 项目愿景
 
@@ -15,6 +15,17 @@
 
 这是一个 monorepo 结构的 skills 集合库，每个 skill 都有独立的文档和实现。
 
+**目录结构**：
+```
+waibuzheng-skills/
+├── .claude/
+│   ├── index.json                    # 项目索引配置
+│   └── skills/                       # Skills 集合
+      └── weekly-report-generator/  # 周报生成器
+├── CLAUDE.md                         # 根级 AI 上下文（本文件）
+└── README.md                         # 根级说明文档
+```
+
 **当前状态**：
 - 已包含 1 个 skill：`weekly-report-generator`（周报生成器）
 - 计划添加更多 skills
@@ -23,7 +34,7 @@
 
 ```mermaid
 graph TD
-    A["(根) waibuzheng 的 skills 集合库"] --> B["skills/"];
+    A["(根) waibuzheng 的 skills 集合库"] --> B[".claude/skills/"];
     B --> C["weekly-report-generator<br/>周报生成器"];
 
     C --> D["scripts/"];
@@ -44,9 +55,9 @@ graph TD
 
     G["(未来) 更多 skills"] -.-> B;
 
-    click C "./skills/weekly-report-generator/CLAUDE.md" "查看周报生成器文档"
-    click D "./skills/weekly-report-generator/scripts/" "查看脚本"
-    click F "./skills/weekly-report-generator/references/" "查看参考文档"
+    click C "./.claude/skills/weekly-report-generator/SKILL.md" "查看周报生成器文档"
+    click D "./.claude/skills/weekly-report-generator/scripts/" "查看脚本"
+    click F "./.claude/skills/weekly-report-generator/references/" "查看参考文档"
 
     style A fill:#e1f5ff,stroke:#01579b,stroke-width:3px
     style B fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -58,7 +69,7 @@ graph TD
 
 | 模块路径 | 职责描述 | 语言 | 状态 | 文档 |
 |---------|---------|------|------|------|
-| `skills/weekly-report-generator` | 自动化周报生成器，从Git提交记录生成专业工作汇报。支持单周/多周批量生成、多项目汇总、自定义模板（Markdown/Word） | Python | 已实现 | [查看](./skills/weekly-report-generator/CLAUDE.md) |
+| `.claude/skills/weekly-report-generator` | 自动化周报生成器，从Git提交记录生成专业工作汇报。支持单周/多周批量生成、多项目汇总、自定义模板（Markdown/Word） | Python | 已实现 | [查看](./.claude/skills/weekly-report-generator/SKILL.md) |
 
 ## 如何添加新的 Skill
 
@@ -70,16 +81,26 @@ graph TD
 ```
 
 Claude 会自动：
-1. 创建目录结构
-2. 生成 SKILL.md 和 CLAUDE.md
+1. 创建目录结构（在 `.claude/skills/my-skill/`）
+2. 生成 SKILL.md, .claude/skills 下面不生成任何CLAUDE.md
 3. 添加必要的脚本和模板
 4. 更新根级文档
 
-### Skill 最小结构
+**重要约束**：
+- ❌ **不要** 在 `.claude/skills/` 下创建 `CLAUDE.md` 和 `README.md` 文件
+- ✅ 只创建 `SKILL.md` 和参考文档（如 `references/` 目录）
+
+### Skill 完整结构（推荐）
 
 ```
-skills/your-skill-name/
-├── SKILL.md          # 必需：Core instructions
+.claude/skills/your-skill-name/
+├── SKILL.md                 # 核心 instructions（必需）
+├── requirements.txt         # 依赖清单（如需要）
+├── scripts/                 # 核心脚本（如需要）
+└── references/              # 参考文档（可选）
+    ├── workflow.md          # 工作流程
+    ├── api-reference.md     # API 参考
+    └── examples.md          # 使用示例
 ```
 
 ## 运行与开发
@@ -93,54 +114,17 @@ skills/your-skill-name/
 
 1. **克隆仓库**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/782042369/waibuzheng-skills.git
    cd waibuzheng-skills
+   cp .claude/skills/weekly-report-generator ～/.claude/skills
    ```
 
-2. **安装依赖**
-   ```bash
-   # 为单个 skill 安装依赖
-   cd skills/weekly-report-generator
-   pip install -r requirements.txt
    ```
 
-3. **使用 skill**
+2. **使用 skill**
    - 参考 skill 的 `SKILL.md` 文档
    - 按照 5 步工作流程使用
 
-## 测试策略
-
-待定义（将在添加更多 skills 后完善）
-
-## 编码规范
-
-### 通用规范
-
-1. **文件命名**
-   - 使用小写字母和连字符：`my-script.py`
-   - 避免使用下划线或驼峰命名
-
-2. **文档规范**
-   - 所有 Python 脚本使用中文注释
-   - 包含作者和日期信息
-   - 提供清晰的函数文档字符串
-
-3. **代码风格**
-   - Python：遵循 PEP 8
-   - Node.js：使用 ESLint
-   - 使用有意义的变量和函数名
-
-### Skill 特定规范
-
-1. **脚本设计**
-   - 单一职责：每个脚本只做一件事
-   - 可组合：脚本之间可以组合使用
-   - 错误处理：优雅地处理错误情况
-
-2. **输入输出**
-   - 优先使用 JSON 格式进行数据交换
-   - 提供清晰的错误消息
-   - 支持命令行参数
 
 ## AI 使用指引
 
@@ -165,8 +149,11 @@ skills/your-skill-name/
 - **Monorepo**：多个 skills 共享一个仓库
 - **可复用性**：skills 设计为可复用、可组合
 
+**目录结构**：
+- 每个 skill 只保留 `SKILL.md` 和必要的参考文档
+
 **当 AI 需要修改或添加 skill 时**：
 1. 先阅读 skill 的 `SKILL.md` 了解功能
-2. 再阅读 `CLAUDE.md` 了解实现细节
-3. 遵循 Skill 目录结构规范
+2. 遵循 Skill 目录结构规范
+3. 确保在 `.claude/skills/` 下不创建 `CLAUDE.md` 和 `README.md`
 4. 确保添加必要的文档
