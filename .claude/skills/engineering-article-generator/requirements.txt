@@ -1,0 +1,16 @@
+# 工程制造业文章创作器 - Python 依赖清单
+# 艹，老王我提醒你：安装前先检查版本兼容性！
+
+# HTTP 请求库（用于爬取文章）
+requests>=2.31.0
+
+# HTML 解析库（用于提取文章正文）
+beautifulsoup4>=4.12.0
+
+# HTTP 库（requests 的依赖）
+urllib3>=2.0.0
+
+# 说明：
+# - argparse、json、pathlib 都是 Python 标准库，不需要安装
+# - 版本号 >= 表示可以使用更新的版本
+# - 安装命令：pip install -r requirements.txt
