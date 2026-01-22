@@ -38,12 +38,9 @@ def extract_variables(
     for match in variable_pattern.finditer(content):
         placeholder = match.group(0)
         var_name = match.group(1).strip()
-        is_required = any(req in var_name for req in required_vars)
-
         variables[placeholder] = {
             "name": var_name,
-            "description": f"变量：{var_name}",
-            "required": is_required
+            "required": any(req in var_name for req in required_vars)
         }
 
     return variables
@@ -75,3 +72,28 @@ def validate_repo_path(path: str) -> Tuple[bool, Optional[str]]:
 def get_week_day_name(date: datetime) -> str:
     """获取星期几的中文名称（周一到周日）"""
     return WEEKDAYS[date.weekday()]
+
+
+def extract_sections_from_structure(structure: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """从模板结构中提取章节列表
+
+    Args:
+        structure: 模板结构（来自 analyze_template.py 的输出）
+
+    Returns:
+        章节列表，每个章节包含 title 和 level
+    """
+    sections_data = structure.get("sections", [])
+    result = []
+
+    for section in sections_data:
+        title = section.get("title", "").strip()
+        if not title:
+            continue
+
+        result.append({
+            "title": title,
+            "level": section.get("level", 2)
+        })
+
+    return result

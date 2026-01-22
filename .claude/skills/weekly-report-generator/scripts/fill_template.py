@@ -73,51 +73,49 @@ def _extract_content_map(data: Dict[str, Any]) -> Dict[str, str]:
     3. report_content结构：{"report_content": {"本周工作情况": [...], "下周工作计划": [...]}}
     """
     def _convert_to_string(value) -> str:
+        """将各种类型转换为字符串"""
         if isinstance(value, str):
             return value.strip()
-        elif isinstance(value, list):
+        if isinstance(value, list):
             return '\n'.join(str(item).strip() for item in value if item)
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             return _convert_to_string(value.get("content", ""))
-        else:
-            return str(value).strip()
+        return str(value).strip()
 
-    content_map = {}
-
-    # 格式1：从 data["sections"] 中提取
-    sections = data.get("sections", [])
-    if sections:
-        for section in sections:
-            title = section.get("title", "").strip()
-            raw_content = section.get("content", "")
-
-            if title and raw_content:
-                content = _convert_to_string(raw_content)
-                if content:
-                    content_map[title] = content
-
-    # 格式2：从 data["report_content"] 中提取
-    report_content = data.get("report_content", {})
-    if report_content:
-        for key, value in report_content.items():
-            if value:
-                content = _convert_to_string(value)
-                if content:
-                    content_map[key] = content
-
-    # 格式3：直接从顶层字段提取
-    special_keys = {"title", "sections", "report_content", "week", "start_date", "end_date"}
-    for key, value in data.items():
-        if key not in special_keys and value:
+    def _add_content(key: str, value: Any) -> None:
+        """添加非空内容到映射表"""
+        if value:
             content = _convert_to_string(value)
             if content:
                 content_map[key] = content
+
+    content_map = {}
+    special_keys = {"title", "sections", "report_content", "week", "start_date", "end_date"}
+
+    # 格式1：从 data["sections"] 中提取
+    for section in data.get("sections", []):
+        title = section.get("title", "").strip()
+        if title:
+            _add_content(title, section.get("content", ""))
+
+    # 格式2：从 data["report_content"] 中提取
+    for key, value in data.get("report_content", {}).items():
+        _add_content(key, value)
+
+    # 格式3：直接从顶层字段提取
+    for key, value in data.items():
+        if key not in special_keys:
+            _add_content(key, value)
 
     return content_map
 
 
 def _normalize_title(title: str) -> str:
-    """标准化标题，用于智能匹配（移除末尾标点、多余空格）"""
+    """标准化标题，用于智能匹配（移除末尾标点、多余空格）
+
+    优先进行精确匹配，如果失败则尝试标准化匹配
+    """
+    # 移除常见的末尾标点符号
     title = re.sub(r'[：:。，、\s]+$', '', title)
     title = title.strip()
     return title
@@ -160,21 +158,12 @@ def _fill_document(doc, content_map: Dict[str, str]) -> None:
                 if not content_lines:
                     continue
 
-                if i + 1 < len(doc.paragraphs):
-                    next_para = doc.paragraphs[i + 1]
-                    next_text = next_para.text.strip()
-                    if not next_text or _is_placeholder(next_text):
-                        next_para.clear()
-                        next_para.add_run(content_lines[0])
-                        for line in content_lines[1:]:
-                            new_para = next_para.insert_paragraph_before(line)
-                            next_para._p.addnext(new_para._p)
-                        filled_sections.add(current_section_title)
-                        continue
-
-                for line in content_lines:
+                # 在标题后按正确顺序插入内容段落
+                # 从最后一行开始倒序插入，这样顺序才是正确的
+                for line in reversed(content_lines):
                     new_para = para.insert_paragraph_before(line)
-                    para._p.addnext(new_para)
+                    # 将新段落移动到标题后
+                    para._element.addnext(new_para._element)
 
                 filled_sections.add(current_section_title)
 

@@ -14,51 +14,53 @@ from typing import Dict, List, Optional, Any
 import subprocess
 
 try:
-    from .common import fix_windows_console_encoding, validate_repo_path
+    from .common import fix_windows_console_encoding, validate_repo_path, extract_sections_from_structure
 except ImportError:
-    from common import fix_windows_console_encoding, validate_repo_path
+    from common import fix_windows_console_encoding, validate_repo_path, extract_sections_from_structure
 
 fix_windows_console_encoding()
 
 
+def _run_script(script_name: str, args: List[str], output_path: str) -> Dict[str, Any]:
+    """运行子脚本并返回JSON结果
+
+    Args:
+        script_name: 脚本文件名（如 "parse_time.py"）
+        args: 命令行参数列表（不包括脚本名和output参数）
+        output_path: 输出文件路径
+
+    Returns:
+        脚本输出的JSON数据
+
+    Raises:
+        SystemExit: 脚本执行失败时退出
+    """
+    script_path = Path(__file__).parent / script_name
+    cmd = ["python3", str(script_path)] + args + ["--output", output_path]
+
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+
+    if result.returncode != 0:
+        print(f"❌ {script_name} 执行失败：{result.stderr}")
+        sys.exit(1)
+
+    output_file = Path(output_path)
+    if not output_file.exists():
+        print(f"❌ {script_name} 输出文件未生成：{output_path}")
+        sys.exit(1)
+
+    with open(output_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 def run_parse_time(expression: str, output_path: str) -> Dict[str, Any]:
     """调用 parse_time.py 解析时间"""
-    script_path = Path(__file__).parent / "parse_time.py"
-    cmd = [
-        sys.executable,
-        str(script_path),
-        "--expression", expression,
-        "--output", output_path
-    ]
-
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
-
-    if result.returncode != 0:
-        print(f"❌ 时间解析失败：{result.stderr}")
-        sys.exit(1)
-
-    with open(output_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return _run_script("parse_time.py", ["--expression", expression], output_path)
 
 
-def run_analyze_template(template_path: str, output_path: str) -> Optional[Dict[str, Any]]:
+def run_analyze_template(template_path: str, output_path: str) -> Dict[str, Any]:
     """调用 analyze_template.py 分析模板"""
-    script_path = Path(__file__).parent / "analyze_template.py"
-    cmd = [
-        sys.executable,
-        str(script_path),
-        "--template", template_path,
-        "--output", output_path
-    ]
-
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
-
-    if result.returncode != 0:
-        print(f"❌ 模板分析失败：{result.stderr}")
-        sys.exit(1)
-
-    with open(output_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return _run_script("analyze_template.py", ["--template", template_path], output_path)
 
 
 def validate_project_paths(paths: List[str]) -> None:
@@ -90,19 +92,16 @@ def validate_output_path(output_path: str) -> Path:
     return tmp_dir
 
 
-def extract_required_sections(template_structure: Dict[str, Any]) -> List[str]:
-    """从模板结构中提取需要补充的章节"""
-    required_sections = []
-    variables = template_structure.get("variables", {})
+def extract_template_sections(template_structure: Dict[str, Any]) -> List[str]:
+    """从模板结构中提取章节标题列表
 
-    if "future_plan" in variables or "下周计划" in variables:
-        required_sections.append("future_plan")
-    if "summary" in variables or "本周总结" in variables:
-        required_sections.append("summary")
-    if "risk" in variables or "问题和风险" in variables:
-        required_sections.append("risk")
-
-    return required_sections
+    Returns:
+        章节标题列表，如：["本周工作情况：", "下周工作计划：", "需协调解决问题："]
+    """
+    return [
+        section["title"]
+        for section in extract_sections_from_structure(template_structure.get("structure", {}))
+    ]
 
 
 def generate_week_tasks(
@@ -111,8 +110,7 @@ def generate_week_tasks(
     output_path: Path,
     template_path: Optional[str],
     output_format: str,
-    template_structure: Optional[Dict[str, Any]],
-    required_sections: List[str]
+    template_sections: Optional[List[str]]
 ) -> List[Dict[str, Any]]:
     """为每个周生成任务配置文件"""
     tasks = []
@@ -130,7 +128,7 @@ def generate_week_tasks(
             "output_path": str(output_path),
             "template_path": template_path,
             "output_format": output_format,
-            "required_sections": required_sections,
+            "template_sections": template_sections,
             "tmp_files": {
                 "log": f"tmp/week_{week_num}-log.json",
                 "report": f"tmp/week_{week_num}-report.json"
@@ -152,18 +150,14 @@ def print_confirmation(
     template_path: Optional[str],
     output_path: str,
     output_format: str,
-    required_sections: List[str]
+    template_sections: Optional[List[str]]
 ) -> None:
     """打印二次确认信息"""
     print("\n⏳ 准备工作完成！请确认以下信息：\n")
-
-    description = time_result.get("description", "")
-    print(f"📅 时间范围: {description}")
-
-    total_weeks = time_result.get("total_weeks", 0)
-    print(f"📊 生成周报: {total_weeks}份")
-
+    print(f"📅 时间范围: {time_result.get('description', '')}")
+    print(f"📊 生成周报: {time_result.get('total_weeks', 0)}份")
     print(f"📁 项目路径: ({len(project_paths)}个)")
+
     for i, path in enumerate(project_paths, 1):
         print(f"   {i}. {path}")
 
@@ -175,14 +169,10 @@ def print_confirmation(
     format_name = "Markdown (.md)" if output_format == ".md" else "Word (.docx)"
     print(f"📝 输出格式: {format_name}")
 
-    if required_sections:
-        section_names = {
-            "future_plan": "下周工作计划",
-            "summary": "本周总结",
-            "risk": "问题和风险"
-        }
-        section_list = [section_names[s] for s in required_sections]
-        print(f"✨ 补充章节: {', '.join(section_list)}")
+    if template_sections:
+        print(f"📋 模板章节: ({len(template_sections)}个)")
+        for section in template_sections:
+            print(f"   - {section}")
 
     print()
 
@@ -194,7 +184,21 @@ def generate_claude_call_instruction(
     """生成 Claude Code 调用说明"""
     instruction_file = output_path / "tmp" / "claude_instruction.md"
 
-    content = """# 周报生成任务
+    # 从第一个任务中提取模板章节信息
+    template_sections_info = ""
+    if tasks and tasks[0].get("template_sections"):
+        sections = tasks[0]["template_sections"]
+        if sections:
+            sections_list = "\n".join([f'   - "{s}"' for s in sections])
+            template_sections_info = f"""
+
+**模板中的章节标题**:
+{sections_list}
+
+AI 需要为每个章节生成对应的 `content` 内容。
+"""
+
+    content = f"""# 周报生成任务
 
 所有准备工作已完成！现在请 Claude Code 执行以下步骤：
 
@@ -202,50 +206,63 @@ def generate_claude_call_instruction(
 
 使用 Task 工具并行启动多个 general-purpose 子智能体，每个子智能体处理一个周报。
 
-**子智能体的任务提示**（复制以下内容，替换 `{week_num}` 等占位符）：
+**子智能体的任务提示**（复制以下内容，替换 `{{week_num}}` 等占位符）：
 
 ```
-你是一个周报生成助手。请独立完成第 {week_num} 周周报的生成任务。
+你是一个周报生成助手。请独立完成第 {{week_num}} 周周报的生成任务。
 
 **任务配置文件**:
-读取文件：{output_path}/tmp/week_{week_num}-task.json
+读取文件：{{output_path}}/tmp/week_{{week_num}}-task.json
 
 **你的任务**:
-1. 读取任务配置，获取参数
-2. 调用 scripts/get_git_logs.py 获取Git日志
-   参数：--paths "{project1},{project2}" --since {start_date} --until {end_date} --output "{output_path}/tmp/week_{week_num}-log.json"
 
-3. 读取Git日志文件：{output_path}/tmp/week_{week_num}-log.json
+1. 读取任务配置，获取参数
+
+2. 调用 scripts/get_git_logs.py 获取Git日志
+   参数：--paths "{{project1}},{{project2}}" --since {{start_date}} --until {{end_date}} --output "{{output_path}}/tmp/week_{{week_num}}-log.json"
+
+3. 读取Git日志文件：{{output_path}}/tmp/week_{{week_num}}-log.json
 
 4. **AI清洗技术术语**（必须）
    - 读取 references/report-prompts.md 了解清洗规则
    - 将技术术语转换为业务语言
    - 智能合并相似的提交记录
    - 按业务价值分级
-   - 输出清洗后的工作内容
 
-5. 保存清洗后的内容到：{output_path}/tmp/week_{week_num}-report.json
-   JSON格式示例：
+5. **构建 sections 格式的 JSON 数据**（必须）
+
+   根据模板的章节标题，为每个章节生成对应的内容：
+
    ```json
    {{
-     "title": "第{week_num}周周报（{start_date} 至 {end_date}）",
+     "title": "第{{week_num}}周周报（{{start_date}} 至 {{end_date}}）",
      "sections": [
-       {{"title": "本周工作情况：", "content": "清洗后的工作内容"}},
-       {{"title": "下周工作计划：", "content": "AI补充的计划"}},
-       {{"title": "需协调解决问题：", "content": "AI补充的问题"}}
+       {{"title": "本周工作情况：", "content": "清洗后的工作内容（1. xxx\\n2. xxx）"}},
+       {{"title": "下周工作计划：", "content": "基于本周工作推导的计划（1. xxx\\n2. xxx）"}},
+       {{"title": "需协调解决问题：", "content": "识别的问题和风险"}}
      ]
    }}
    ```
+{template_sections_info}
+   **关键规则**:
+   - `title` 必须与模板章节标题完全匹配（包括标点符号）
+   - `content` 根据 references/report-prompts.md 的规则生成
+   - 工作内容：使用清洗后的技术术语转换结果
+   - 下周计划：基于本周工作推导（继续优化/测试上线/验证监控）
+   - 问题风险：识别技术问题和业务风险，没有则填"暂无"
 
-6. **AI补充主智能体指定的章节**（必须）
-   - 基于本周工作内容推测下周计划
-   - 基于本周工作内容推断问题和风险
-   - 更新 week_{week_num}-report.json
+6. 保存到：{{output_path}}/tmp/week_{{week_num}}-report.json
 
 7. 调用 scripts/fill_template.py 填充模板并导出
-   参数：--template "{template_path}" --data "{output_path}/tmp/week_{week_num}-report.json" --output "{output_path}/第{week_num}周周报.{ext}"
+   参数：--template "{{template_path}}" --data "{{output_path}}/tmp/week_{{week_num}}-report.json" --output "{{output_path}}/第{{week_num}}周周报.{{ext}}"
 
-8. 返回成功/失败状态
+   ⚠️ 重要输出规则：
+   - 如果提供了模板（--template参数）：只输出模板格式的周报文件
+
+8. 返回简短的成功/失败状态
+   ⚠️ 重要：只返回简短状态，不要输出详细报告！
+   成功格式："✅ 第{{week_num}}周周报生成成功"
+   失败格式："❌ 第{{week_num}}周周报生成失败：[错误原因]"
 ```
 
 ## Step 2: 汇总结果
@@ -256,6 +273,14 @@ def generate_claude_call_instruction(
 - 成功的任务：删除 tmp/week_XX-log.json 和 tmp/week_XX-report.json
 - 失败的任务：保留用于调试
 - 最终：只保留正式周报文件
+
+---
+
+## 📚 重要参考文档
+
+- **内容清洗规则**: references/report-prompts.md（术语转换、章节填充规则）
+- **工作流程**: references/workflow.md（详细执行步骤）
+- **脚本API**: references/script-api-reference.md（参数说明）
 """
 
     with open(instruction_file, "w", encoding="utf-8") as f:
@@ -343,7 +368,7 @@ def main():
     print(f"✅ 时间解析成功: {time_result['description']}")
 
     template_structure = None
-    required_sections = []
+    template_sections = None
 
     if args.template:
         print("🔍 分析模板文件...")
@@ -351,9 +376,9 @@ def main():
         template_structure = run_analyze_template(args.template, str(template_structure_path))
         print(f"✅ 模板分析成功")
 
-        required_sections = extract_required_sections(template_structure)
-        if required_sections:
-            print(f"✅ 检测到需要补充的章节: {required_sections}")
+        template_sections = extract_template_sections(template_structure)
+        if template_sections:
+            print(f"✅ 检测到 {len(template_sections)} 个章节")
     else:
         print("⏭️  未提供模板，跳过分析")
 
@@ -367,8 +392,7 @@ def main():
         output_path=Path(args.output),
         template_path=args.template,
         output_format=output_format_ext,
-        template_structure=template_structure,
-        required_sections=required_sections
+        template_sections=template_sections
     )
 
     print(f"✅ 已生成 {len(tasks)} 个周任务配置")
@@ -381,7 +405,7 @@ def main():
             template_path=args.template,
             output_path=args.output,
             output_format=output_format_ext,
-            required_sections=required_sections
+            template_sections=template_sections
         )
 
         response = input("确认吗？(输入'确认'开始生成，其他任意键取消): ")
