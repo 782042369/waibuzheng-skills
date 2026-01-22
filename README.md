@@ -31,29 +31,42 @@
 - Node.js 20+ （使用 Node.js 的 skill）
 - Git （部分 skill 需要）
 
-### 安装和使用
+### 安装步骤
 
 1. **克隆仓库**
 ```bash
 git clone https://github.com/782042369/waibuzheng-skills.git
 cd waibuzheng-skills
-cp .claude/skills/weekly-report-generator ～/.claude/skills
 ```
 
-2. **使用 skill**
+2. **复制 skill 到对应目录**
+
+**不同 AI 工具的安装路径**：
+
+| AI 工具 | 复制路径 |
+| ------- | ------------------------------------------------ |
+| Claude Code | `~/.claude/skills/` |
+| Cursor | `.cursor/commands/` + `.shared/` |
+| Windsurf | `.windsurf/workflows/` + `.shared/` |
+| GitHub Copilot | `.github/prompts/` + `.shared/` |
+
+**示例（Claude Code）**：
 ```bash
-启动claude
-weekly-report-generator
-项目路径：仓库1,仓库2 、（单项目的话：仓库1）
-时间范围：`本周、上周、本月、上月、本年、去年、YYYY-MM-DD 或 YYYY-MM-DD-YYYY-MM-DD`
-命名规则：xx第一周周报 xxx第二周周报
-模版: xxx/report.docx 绝对路径
-输出路径: xxx/results 绝对路径
+cp -r .claude/skills/weekly-report-generator ~/.claude/skills/
 ```
 
-3. **使用 skill**
-- 参考 skill 的 `SKILL.md` 文档
-- 按照工作流程使用
+3. **启动 AI 助手并使用 skill**
+
+以 `weekly-report-generator` 为例：
+
+- 启动 Claude Code
+- 输入：`weekly-report-generator`
+- 按提示提供参数：
+  - **项目路径**：`仓库1,仓库2`（多个项目用逗号分隔，单个项目直接写路径）
+  - **时间范围**：`本周`、`上周`、`本月`、`上月`、`本年`、`去年`，或具体日期如 `2026-01-01` 或 `2026-01-01-2026-01-07`
+  - **命名规则**：`xx第一周周报`、`xxx第二周周报`
+  - **模板路径**：Word 模板的绝对路径，如 `/path/to/report.docx`
+  - **输出路径**：结果保存的绝对路径，如 `/path/to/results`
 
 ## 📚 如何添加新的 Skill
 
@@ -102,8 +115,7 @@ skills/your-skill-name/
 ├── README.md                     # 使用说明（推荐）
 ├── requirements.txt              # Python 依赖
 ├── scripts/                      # 核心脚本
-├── /                       # 资源文件（可选）
-│   └── templates/
+└── templates/                   # 资源文件（可选）
 └── references/                   # 参考文档（可选）
 ```
 
