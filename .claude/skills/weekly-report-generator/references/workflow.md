@@ -110,7 +110,7 @@ TodoWrite(todos=[...], current_task_index=1)  # "为第1周启动子智能体" �
 ```
 Task(
   subagent_type="general-purpose",
-  prompt="你是周报生成助手。请独立完成第 1 周周报的生成任务。\n\n**重要信息**：\n- 输出文件名必须是：A项目第1周周报.docx\n- 时间范围：2025-01-13 至 2025-01-17\n\n**任务步骤**：\n\n1. **读取任务配置**：\n   文件路径：E:/周报/tmp/week_1-task.json\n\n2. **获取Git日志**：\n   调用脚本：scripts/get_git_logs.py\n   参数：--paths \"E:/A项目项目\" --since 2025-01-13 --until 2025-01-17 --output \"E:/周报/tmp/week_1-log.json\"\n\n3. **读取Git日志并清洗内容**（必须严格执行）：\n   - 读取清洗规则：references/report-prompts.md\n   - 读取Git日志：E:/周报/tmp/week_1-log.json\n   - 严格按照清洗规则处理：\n     * 过滤纯技术组件开发、底层技术实现、开发工具相关内容\n     * 将技术术语转换为业务语言\n     * 智能合并相似的提交记录\n     * 按业务价值分级排序\n     * 控制在20-30条内\n   - 输出清洗后的工作内容\n\n4. **保存清洗后的内容**：\n   ⚠️ **必须使用以下JSON格式**：\n   ```json\n   {\n     \"title\": \"A项目第1周周报（2025-01-13 至 2025-01-17）\",\n     \"sections\": [\n       {\n         \"title\": \"本周工作情况：\",\n         \"content\": \"1. 第一条工作内容\\n2. 第二条工作内容\\n3. 第三条工作内容\\n...\"\n       },\n       {\n         \"title\": \"下周工作计划：\",\n         \"content\": \"1. 第一项计划\\n2. 第二项计划\\n3. 第三项计划\\n...\"\n       },\n       {\n         \"title\": \"需协调解决问题：\",\n         \"content\": \"1. 第一个问题\\n2. 第二个问题\\n3. 第三个问题\\n...\"\n       }\n     ]\n   }\n   ```\n   ⚠️ **重要提醒**：\n   - 必须使用 `sections` 结构，不要使用 `work_items`、`content`、`future_plan` 等其他字段名\n   - `content` 字段必须是字符串，用换行符（\\n）分隔多条目\n   - 不要使用数组格式，必须转换为字符串\n\n   保存到：E:/周报/tmp/week_1-report.json\n\n5. **补充下周计划和问题章节**（必须）：\n   - 基于清洗后的工作内容推导下周计划\n   - 基于工作内容识别问题和风险\n   - 更新 week_1-report.json\n\n6. **填充模板并导出**：\n   调用脚本：scripts/fill_template.py\n   参数：--template \"E:/周报模板.docx\" --data \"E:/周报/tmp/week_1-report.json\" --output \"E:/周报/A项目第1周周报.docx\"\n\n**重要提醒**：\n- 必须严格遵守清洗规则，技术术语必须转换为业务语言\n- 必须补充下周计划和问题章节\n- 输出文件名必须正确\n- ⚠️ **JSON格式必须使用 sections 结构**\n\n完成后返回：✅ 第1周周报生成成功 或 ❌ 失败原因",
+  prompt="你是周报生成助手。请独立完成第 1 周周报的生成任务。\n\n**重要信息**：\n- 输出文件名必须是：A项目第1周周报.docx\n- 时间范围：2025-01-13 至 2025-01-17\n\n**任务步骤**：\n\n1. **读取任务配置**：\n   文件路径：E:/周报/tmp/week_1-task.json\n\n2. **获取Git日志**：\n   调用脚本：scripts/get_git_logs.py\n   参数：--paths \"E:/A项目项目\" --since 2025-01-13 --until 2025-01-17 --output \"E:/周报/tmp/week_1-log.json\"\n\n3. **读取Git日志并清洗内容**（必须严格执行）：\n   - 读取清洗规则：references/report-prompts.md\n   - 读取Git日志：E:/周报/tmp/week_1-log.json\n   - 严格按照清洗规则处理：\n     * 过滤纯技术组件开发、底层技术实现、开发工具相关内容\n     * 将技术术语转换为业务语言\n     * 智能合并相似的提交记录\n     * 按业务价值分级排序\n     * 控制在15-20条内\n   - 输出清洗后的工作内容\n\n4. **保存清洗后的内容**：\n   ⚠️ **必须使用以下JSON格式**：\n   ```json\n   {\n     \"title\": \"A项目第1周周报（2025-01-13 至 2025-01-17）\",\n     \"sections\": [\n       {\n         \"title\": \"本周工作情况：\",\n         \"content\": \"1. 第一条工作内容\\n2. 第二条工作内容\\n3. 第三条工作内容\\n...\"\n       },\n       {\n         \"title\": \"下周工作计划：\",\n         \"content\": \"1. 第一项计划\\n2. 第二项计划\\n3. 第三项计划\\n...\"\n       },\n       {\n         \"title\": \"需协调解决问题：\",\n         \"content\": \"1. 第一个问题\\n2. 第二个问题\\n3. 第三个问题\\n...\"\n       }\n     ]\n   }\n   ```\n   ⚠️ **重要提醒**：\n   - 必须使用 `sections` 结构，不要使用 `work_items`、`content`、`future_plan` 等其他字段名\n   - `content` 字段必须是字符串，用换行符（\\n）分隔多条目\n   - 不要使用数组格式，必须转换为字符串\n\n   保存到：E:/周报/tmp/week_1-report.json\n\n5. **补充下周计划和问题章节**（必须）：\n   - 基于清洗后的工作内容推导下周计划\n   - 基于工作内容识别问题和风险\n   - 更新 week_1-report.json\n\n6. **填充模板并导出**：\n   调用脚本：scripts/fill_template.py\n   参数：--template \"E:/周报模板.docx\" --data \"E:/周报/tmp/week_1-report.json\" --output \"E:/周报/A项目第1周周报.docx\"\n\n**重要提醒**：\n- 必须严格遵守清洗规则，技术术语必须转换为业务语言\n- 必须补充下周计划和问题章节\n- 输出文件名必须正确\n- ⚠️ **JSON格式必须使用 sections 结构**\n\n完成后返回：✅ 第1周周报生成成功 或 ❌ 失败原因",
   description="生成第1周周报"
 )
 ```
@@ -128,13 +128,14 @@ Task(
 你是周报生成助手。请独立完成第 {week_num} 周周报的生成任务。
 
 **重要信息**：
-- 输出文件名必须是：A项目第{week_num}周周报.docx
+- 输出文件名必须是：A项目第{week_num}周周报.docx（如果 task.json 中有 output_filename 字段，则使用该字段指定的文件名）
 - 时间范围：{start_date} 至 {end_date}
 
 **任务步骤**：
 
 1. **读取任务配置**：
    文件路径：{output_path}/tmp/week_{week_num}-task.json
+   ⚠️ **检查 output_filename 字段**：如果 task.json 中包含 `output_filename` 字段，则使用该字段作为输出文件名；否则使用默认命名规则。
 
 2. **获取Git日志**：
    调用脚本：scripts/get_git_logs.py
@@ -148,7 +149,7 @@ Task(
      * 将技术术语转换为业务语言
      * 智能合并相似的提交记录
      * 按业务价值分级排序
-     * 控制在20-30条内
+     * 控制在15-20条内
    - 输出清洗后的工作内容
 
 4. **保存清洗后的内容**：
@@ -186,12 +187,14 @@ Task(
 
 6. **填充模板并导出**：
    调用脚本：scripts/fill_template.py
-   参数：--template "{template_path}" --data "{output_path}/tmp/week_{week_num}-report.json" --output "{output_path}/A项目第{week_num}周周报.docx"
+   参数：--template "{template_path}" --data "{output_path}/tmp/week_{week_num}-report.json" --output "{output_path}/[从task.json读取的output_filename或默认文件名]"
 
 **重要提醒**：
 - 必须严格遵守清洗规则，技术术语必须转换为业务语言
 - 必须补充下周计划和问题章节
-- 输出文件名必须正确
+- ⚠️ **输出文件名规则**：
+  - 优先使用 task.json 中的 `output_filename` 字段（如果存在）
+  - 否则使用默认命名：`第{week_num}周周报.{format}`
 - ⚠️ **JSON格式必须使用 sections 结构**
 
 完成后返回：✅ 第{week_num}周周报生成成功 或 ❌ 失败原因
@@ -280,7 +283,7 @@ TodoWrite(todos=[...], all_completed=True)  # 所有任务 → completed
 3. **转换**技术术语为业务语言（参考术语映射表）
 4. **合并**相似的提交记录
 5. **排序**按业务价值分级
-6. **控制**在20-30条内
+6. **控制**在15-20条内
 
 ### JSON格式要求
 

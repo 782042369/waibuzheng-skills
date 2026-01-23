@@ -281,17 +281,7 @@ python scripts/get_git_logs.py \
   --until "2025-05-18" \
   --output "results/tmp/week_1-log.json"
 
-# Step 2.2: AI清洗内容（AI执行，非脚本）
-# - 读取 week_1-log.json
-# - 根据 report-prompts.md 清洗内容
-# - 生成 week_1-report.json（包含清洗后内容和补充章节）
-
-# Step 2.3: AI填充模板（AI执行，非脚本）
-# - 读取 template_structure.json
-# - 读取 week_1-report.json
-# - 填充模板内容
-
-# Step 2.4: 导出Word文档
+# Step 2.3: 导出Word文档
 python scripts/fill_template.py \
   --template "report.docx" \
   --data "results/tmp/week_1-fill-data.json" \

@@ -31,7 +31,8 @@ python scripts/orchestrate_reports.py \
   --time "本月" \
   --output "E:\周报输出" \
   --template "E:\模板.docx" \
-  --format docx
+  --format docx \
+  --naming "第一周周报,第二周周报,第三周周报,第四周周报"
 ```
 
 **脚本自动完成**：
@@ -109,11 +110,7 @@ Python 脚本详细调用参数和使用示例：
 - `orchestrate_reports.py` - 编排所有步骤
 
 ### 📘 [report-prompts.md](references/report-prompts.md)
-内容清洗规则（AI 必须严格遵守）：
-- 内容提炼标准（业务导向、智能合并、价值分级）
-- 术语转换映射表（100+技术术语→业务表达）
-- 模板变量填充规则
-- 多项目汇总规则（禁止按项目分组）
+内容清洗规则（AI 必须严格遵守）
 
 ## 参数说明
 
@@ -126,6 +123,11 @@ Python 脚本详细调用参数和使用示例：
 - `--output`（必须）：输出目录路径
 - `--template`（可选）：模板文件路径（支持 .md 和 .docx）
 - `--format`（可选，默认 md）：输出格式（`md` 或 `docx`）
+- `--naming`（可选）：周报命名规则列表，逗号分隔
+  - **推荐使用**：为每个周报指定自定义文件名
+  - 示例：`--naming "华电第一周周报,华电第二周周报"`
+  - 命名规则数量必须与生成的周报数量一致
+  - 不提供时使用默认命名：`第X周周报.docx`
 
 ### 时间表达式示例
 

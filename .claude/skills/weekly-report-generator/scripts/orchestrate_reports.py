@@ -110,7 +110,8 @@ def generate_week_tasks(
     output_path: Path,
     template_path: Optional[str],
     output_format: str,
-    template_sections: Optional[List[str]]
+    template_sections: Optional[List[str]],
+    naming_rules: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
     """为每个周生成任务配置文件"""
     tasks = []
@@ -119,6 +120,11 @@ def generate_week_tasks(
         week_num = week_info["week"]
         start_date = week_info["start"]
         end_date = week_info["end"]
+
+        # 获取命名规则（如果提供）
+        output_filename = None
+        if naming_rules and week_num <= len(naming_rules):
+            output_filename = f"{naming_rules[week_num - 1]}{output_format}"
 
         task_config = {
             "week": week_num,
@@ -129,6 +135,7 @@ def generate_week_tasks(
             "template_path": template_path,
             "output_format": output_format,
             "template_sections": template_sections,
+            "output_filename": output_filename,
             "tmp_files": {
                 "log": f"tmp/week_{week_num}-log.json",
                 "report": f"tmp/week_{week_num}-report.json"
@@ -179,7 +186,8 @@ def print_confirmation(
 
 def generate_claude_call_instruction(
     output_path: Path,
-    tasks: List[Dict[str, Any]]
+    tasks: List[Dict[str, Any]],
+    naming_rules: Optional[List[str]] = None
 ) -> None:
     """生成 Claude Code 调用说明"""
     instruction_file = output_path / "tmp" / "claude_instruction.md"
@@ -198,89 +206,90 @@ def generate_claude_call_instruction(
 AI 需要为每个章节生成对应的 `content` 内容。
 """
 
+    # 生成命名规则说明
+    naming_info = ""
+    if naming_rules:
+        naming_list = "\n".join([f'   - 第{i+1}周: {name}' for i, name in enumerate(naming_rules)])
+        naming_info = f"""
+
+**自定义命名规则**:
+{naming_list}
+
+⚠️ 子智能体必须使用上述自定义文件名，不要使用默认的"第X周周报"格式。
+"""
+
     content = f"""# 周报生成任务
 
 所有准备工作已完成！现在请 Claude Code 执行以下步骤：
 
 ## Step 1: 并行处理每个周报
 
-使用 Task 工具并行启动多个 general-purpose 子智能体，每个子智能体处理一个周报。
+使用 Task 工具并行启动 general-purpose 子智能体。
 
-**子智能体的任务提示**（复制以下内容，替换 `{{week_num}}` 等占位符）：
+**子智能体任务提示**（替换占位符）：
 
 ```
-你是一个周报生成助手。请独立完成第 {{week_num}} 周周报的生成任务。
+你是周报生成助手。请独立完成第 {{week_num}} 周周报。
 
 **任务配置文件**:
-读取文件：{{output_path}}/tmp/week_{{week_num}}-task.json
+{{output_path}}/tmp/week_{{week_num}}-task.json
 
-**你的任务**:
+**执行步骤**:
+1. 读取 task JSON 获取参数
 
-1. 读取任务配置，获取参数
-
-2. 调用 scripts/get_git_logs.py 获取Git日志
+2. 调用 scripts/get_git_logs.py 获取日志
    参数：--paths "{{project1}},{{project2}}" --since {{start_date}} --until {{end_date}} --output "{{output_path}}/tmp/week_{{week_num}}-log.json"
 
-3. 读取Git日志文件：{{output_path}}/tmp/week_{{week_num}}-log.json
+3. 按 {{output_path}}/tmp/week_{{week_num}}-log.json
 
-4. **AI清洗技术术语**（必须）
-   - 读取 references/report-prompts.md 了解清洗规则
-   - 将技术术语转换为业务语言
-   - 智能合并相似的提交记录
-   - 按业务价值分级
+4. 生成 sections 格式 JSON 并保存到 {{output_path}}/tmp/week_{{week_num}}-report.json
 
-5. **构建 sections 格式的 JSON 数据**（必须）
+5. 调用 fill_template.py 导出
 
-   根据模板的章节标题，为每个章节生成对应的内容：
-
-   ```json
-   {{
-     "title": "第{{week_num}}周周报（{{start_date}} 至 {{end_date}}）",
-     "sections": [
-       {{"title": "本周工作情况：", "content": "清洗后的工作内容（1. xxx\\n2. xxx）"}},
-       {{"title": "下周工作计划：", "content": "基于本周工作推导的计划（1. xxx\\n2. xxx）"}},
-       {{"title": "需协调解决问题：", "content": "识别的问题和风险"}}
-     ]
-   }}
-   ```
-{template_sections_info}
-   **关键规则**:
-   - `title` 必须与模板章节标题完全匹配（包括标点符号）
-   - `content` 根据 references/report-prompts.md 的规则生成
-   - 工作内容：使用清洗后的技术术语转换结果
-   - 下周计划：基于本周工作推导（继续优化/测试上线/验证监控）
-   - 问题风险：识别技术问题和业务风险，没有则填"暂无"
-
-6. 保存到：{{output_path}}/tmp/week_{{week_num}}-report.json
-
-7. 调用 scripts/fill_template.py 填充模板并导出
-   参数：--template "{{template_path}}" --data "{{output_path}}/tmp/week_{{week_num}}-report.json" --output "{{output_path}}/第{{week_num}}周周报.{{ext}}"
-
-   ⚠️ 重要输出规则：
-   - 如果提供了模板（--template参数）：只输出模板格式的周报文件
-
-8. 返回简短的成功/失败状态
-   ⚠️ 重要：只返回简短状态，不要输出详细报告！
-   成功格式："✅ 第{{week_num}}周周报生成成功"
-   失败格式："❌ 第{{week_num}}周周报生成失败：[错误原因]"
+**JSON 格式**:
+```json
+{{
+  "title": "第{{week_num}}周周报",
+  "sections": [
+    {{"title": "本周工作情况：", "content": "1. xxx\\n2. xxx"}},
+    {{"title": "下周工作计划：", "content": "1. xxx\\n2. xxx"}},
+    {{"title": "需协调解决问题：", "content": "识别的问题和风险"}}
+  ]
+}}
+```
+{template_sections_info}{naming_info}
+**返回状态**: "✅ 第{{week_num}}周周报生成成功" 或 "❌ 失败原因"
+⚠️ 只返回简短状态，不要输出详细报告！
 ```
 
-## Step 2: 汇总结果
+**变量替换**:
+- {{week_num}} = 周数（1, 2, 3...）
+- {{output_path}} = 输出目录路径
+- 其他变量见 task JSON
 
-所有子任务完成后，汇总结果并清理临时文件。
+## Step 2: 核心规则摘要
 
-**清理规则**：
-- 成功的任务：删除 tmp/week_XX-log.json 和 tmp/week_XX-report.json
-- 失败的任务：保留用于调试
-- 最终：只保留正式周报文件
+```
+**周报清洗核心规则**：
 
----
+【过滤规则】
+- ❌ 必须过滤：merge commit、初始化、空提交、格式化、文档更新、依赖更新、纯组件开发、底层实现
+- ✅ 保留：业务功能、性能优化、用户体验改进
 
-## 📚 重要参考文档
+【语言规范】
+- 动词开头：新增/优化/完善/修复/调整/支持/实现/提升
+- 禁用第一人称：不使用"我/我们"
+- 禁用套话：不使用"有效地/成功地/进一步"
+- 数量控制：15-20条以内
+- 禁止按项目分组，统一编号
 
-- **内容清洗规则**: references/report-prompts.md（术语转换、章节填充规则）
-- **工作流程**: references/workflow.md（详细执行步骤）
-- **脚本API**: references/script-api-reference.md（参数说明）
+【推导规则】
+完整规则：references/report-prompts.md
+```
+
+## Step 3: 汇总结果
+
+清理临时文件（成功任务的临时文件删除，失败的保留）。
 """
 
     with open(instruction_file, "w", encoding="utf-8") as f:
@@ -305,6 +314,9 @@ def main():
 
   # 指定时间范围
   python orchestrate_reports.py --paths "E:\\项目1" --time "2025-1-1-2025-1-31" --output "E:\\周报"
+
+  # 自定义周报命名规则（推荐）
+  python orchestrate_reports.py --paths "E:\\项目1,E:\\项目2" --time "2025-6-30-2025-7-11" --output "E:\\周报" --template "E:\\模板.docx" --format docx --naming "华电第一周周报,华电第二周周报"
         """
     )
 
@@ -337,6 +349,11 @@ def main():
         choices=["md", "docx"],
         default="md",
         help="输出格式（默认: md）"
+    )
+    parser.add_argument(
+        "--naming",
+        type=str,
+        help="周报命名规则列表，用逗号分隔（如：第一周周报,第二周周报）"
     )
 
     args = parser.parse_args()
@@ -381,13 +398,22 @@ def main():
     weeks = time_result["weeks"]
     output_format_ext = f".{args.format}"
 
+    # 处理命名规则
+    naming_rules = None
+    if args.naming:
+        naming_rules = [name.strip() for name in args.naming.split(",")]
+        if len(naming_rules) != len(weeks):
+            print(f"⚠️ 警告：命名规则数量({len(naming_rules)})与周数({len(weeks)})不匹配")
+            print(f"   将只为前 {len(naming_rules)} 周应用自定义命名")
+
     tasks = generate_week_tasks(
         weeks=weeks,
         project_paths=project_paths,
         output_path=Path(args.output),
         template_path=args.template,
         output_format=output_format_ext,
-        template_sections=template_sections
+        template_sections=template_sections,
+        naming_rules=naming_rules
     )
 
     print(f"✅ 已生成 {len(tasks)} 个周任务配置")
@@ -402,10 +428,9 @@ def main():
         output_format=output_format_ext,
         template_sections=template_sections
     )
-    print("\n⚠️ 请确认以上信息是否正确，如需修改请重新运行脚本")
 
     print("📝 生成 Claude Code 调用说明...")
-    generate_claude_call_instruction(Path(args.output), tasks)
+    generate_claude_call_instruction(Path(args.output), tasks, naming_rules)
 
     print("=" * 60)
     print("✅ 准备工作完成！")
