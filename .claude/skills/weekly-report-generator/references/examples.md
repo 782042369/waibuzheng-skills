@@ -24,10 +24,10 @@ python scripts/orchestrate_reports.py \
 E:\周报\2025年1月\
 ├── tmp\                              # 临时文件（自动清理）
 │   ├── time_result.json
-│   ├── week_01-task.json
-│   ├── week_01-log.json
-│   ├── week_01-report.json
-│   ├── week_02-task.json
+│   ├── week_1-task.json
+│   ├── week_1-log.json
+│   ├── week_1-report.json
+│   ├── week_2-task.json
 │   └── ...
 ├── 第1周周报.md                      # 最终周报
 ├── 第2周周报.md
@@ -124,8 +124,7 @@ E:\周报\
 ├── tmp\                              # 临时文件（自动清理）
 │   ├── time_result.json
 │   ├── template_structure.json       # 模板结构分析
-│   ├── week_01-task.json
-│   └── ...
+│   ├── week_1-task.json
 └── 第1周周报.docx                    # 最终周报（使用模板格式）
 ```
 
@@ -160,8 +159,8 @@ E:\周报\2025年第一季度\
 ├── tmp\
 │   ├── time_result.json              # 包含13周的数据
 │   ├── template_structure.json
-│   ├── week_01-task.json
-│   ├── week_02-task.json
+│   ├── week_1-task.json
+│   ├── week_2-task.json
 │   └── ...（共13周）
 ├── A项目第1周周报.docx
 ├── A项目第2周周报.docx
@@ -200,9 +199,9 @@ E:\周报\
 ├── tmp\
 │   ├── time_result.json
 │   ├── template_structure.json
-│   ├── week_01-task.json             # 包含3个项目路径
-│   ├── week_01-log.json              # 包含3个项目的Git日志
-│   └── week_01-report.json           # 汇总后的周报内容
+│   ├── week_1-task.json              # 包含3个项目路径
+│   ├── week_1-log.json               # 包含3个项目的Git日志
+│   └── week_1-report.json            # 汇总后的周报内容
 └── A项目第1周周报.docx
 ```
 
@@ -239,8 +238,7 @@ E:\周报\
 ├── tmp\
 │   ├── time_result.json
 │   ├── template_structure.json
-│   ├── week_01-task.json
-│   └── ...
+│   ├── week_1-task.json
 └── A项目第1周周报.docx                # 2025-01-13 至 2025-01-19
 ```
 
@@ -252,31 +250,7 @@ E:\周报\
 
 ---
 
-## 示例6：跳过二次确认
-
-### 场景
-在自动化脚本中使用周报生成器，不需要二次确认。
-
-### 命令
-
-```bash
-python scripts/orchestrate_reports.py \
-  --paths "E:\A项目项目" \
-  --time "本周" \
-  --output "E:\周报" \
-  --template "E:\周报模板.docx" \
-  --format docx \
-  --no-confirm
-```
-
-### 说明
-
-- `--no-confirm`：跳过二次确认，直接生成任务配置文件
-- 适用于自动化脚本或CI/CD流程
-
----
-
-## 示例7：生成本年所有周报
+## 示例6：生成本年所有周报
 
 ### 场景
 年终总结时生成本年所有周报，用于年度汇报。
@@ -299,8 +273,8 @@ E:\周报\2025年全年\
 ├── tmp\
 │   ├── time_result.json              # 包含52周的数据
 │   ├── template_structure.json
-│   ├── week_01-task.json
-│   ├── week_02-task.json
+│   ├── week_1-task.json
+│   ├── week_2-task.json
 │   └── ...（共52周）
 ├── A项目第1周周报.docx
 ├── A项目第2周周报.docx

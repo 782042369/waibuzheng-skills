@@ -149,7 +149,7 @@ python scripts/get_git_logs.py \
   --paths "E:\工作\pulian\A-ui" \
   --since "2025-05-12" \
   --until "2025-05-18" \
-  --output "E:\工作\study\results\week_01_data.json"
+  --output "E:\工作\study\results\week_1_data.json"
 ```
 
 **调用示例**（多个仓库）：
@@ -158,7 +158,7 @@ python scripts/get_git_logs.py \
   --paths "E:\工作\pulian\A-ui,E:\工作\pulian\GroupSideProjectManagementSystem" \
   --since "2025-05-12" \
   --until "2025-05-18" \
-  --output "E:\工作\study\results\week_01_data.json"
+  --output "E:\工作\study\results\week_1_data.json"
 ```
 
 **参数说明**：
@@ -186,7 +186,7 @@ python scripts/get_git_logs.py \
 ```bash
 python scripts/fill_template.py \
   --template "E:\工作\study\report\report.docx" \
-  --data "E:\工作\study\results\week_01_fill_data.json" \
+  --data "E:\工作\study\results\week_1_fill_data.json" \
   --output "E:\工作\study\results" \
   --filename "A项目第一周周报.docx"
 ```
@@ -222,7 +222,7 @@ python scripts/fill_template.py \
 ```bash
 python scripts/export_report.py \
   --content "清洗后的周报内容" \
-  --output "E:\工作\study\results\week_01.md"
+  --output "E:\工作\study\results\week_1.md"
 ```
 
 **参数说明**：
@@ -279,22 +279,22 @@ python scripts/get_git_logs.py \
   --paths "E:\proj1,E:\proj2" \
   --since "2025-05-12" \
   --until "2025-05-18" \
-  --output "results/tmp/week_01-log.json"
+  --output "results/tmp/week_1-log.json"
 
 # Step 2.2: AI清洗内容（AI执行，非脚本）
-# - 读取 week_01-log.json
+# - 读取 week_1-log.json
 # - 根据 report-prompts.md 清洗内容
-# - 生成 week_01-report.json（包含清洗后内容和补充章节）
+# - 生成 week_1-report.json（包含清洗后内容和补充章节）
 
 # Step 2.3: AI填充模板（AI执行，非脚本）
 # - 读取 template_structure.json
-# - 读取 week_01-report.json
+# - 读取 week_1-report.json
 # - 填充模板内容
 
 # Step 2.4: 导出Word文档
 python scripts/fill_template.py \
   --template "report.docx" \
-  --data "results/tmp/week_01-fill-data.json" \
+  --data "results/tmp/week_1-fill-data.json" \
   --output "results" \
   --filename "周报20250512-20250518.docx"
 ```

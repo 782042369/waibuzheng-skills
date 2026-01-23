@@ -237,12 +237,12 @@ TodoWrite(todos=[...], all_completed=True)  # 所有任务 → completed
 │   ├── time_result.json              # 时间解析结果
 │   ├── template_structure.json       # 模板结构（如果提供模板）
 │   ├── claude_instruction.md         # Claude Code 调用说明
-│   ├── week_01-task.json             # 第1周任务配置
-│   ├── week_01-log.json              # 第1周Git日志（子智能体生成）
-│   ├── week_01-report.json           # 第1周清洗后内容（子智能体生成）
-│   ├── week_02-task.json             # 第2周任务配置
-│   ├── week_02-log.json              # 第2周Git日志（子智能体生成）
-│   ├── week_02-report.json           # 第2周清洗后内容（子智能体生成）
+│   ├── week_1-task.json              # 第1周任务配置
+│   ├── week_1-log.json               # 第1周Git日志（子智能体生成）
+│   ├── week_1-report.json            # 第1周清洗后内容（子智能体生成）
+│   ├── week_2-task.json              # 第2周任务配置
+│   ├── week_2-log.json               # 第2周Git日志（子智能体生成）
+│   ├── week_2-report.json            # 第2周清洗后内容（子智能体生成）
 │   └── ...                           # 更多周
 ├── A项目第1周周报.docx                # 第1周最终周报
 ├── A项目第2周周报.docx                # 第2周最终周报
@@ -355,5 +355,5 @@ python scripts/orchestrate_reports.py \
 # 返回：✅ 第1周周报生成成功
 
 # Step 5: 主智能体清理临时文件
-# 删除 E:\周报\tmp\week_01-*.json
+# 删除 E:\周报\tmp\week_1-*.json
 ```

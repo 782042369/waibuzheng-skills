@@ -338,11 +338,6 @@ def main():
         default="md",
         help="输出格式（默认: md）"
     )
-    parser.add_argument(
-        "--no-confirm",
-        action="store_true",
-        help="跳过二次确认，直接执行"
-    )
 
     args = parser.parse_args()
 
@@ -398,20 +393,16 @@ def main():
     print(f"✅ 已生成 {len(tasks)} 个周任务配置")
     print()
 
-    if not args.no_confirm:
-        print_confirmation(
-            time_result=time_result,
-            project_paths=project_paths,
-            template_path=args.template,
-            output_path=args.output,
-            output_format=output_format_ext,
-            template_sections=template_sections
-        )
-
-        response = input("确认吗？(输入'确认'开始生成，其他任意键取消): ")
-        if response != "确认":
-            print("❌ 已取消")
-            sys.exit(0)
+    # 显示配置信息供AI确认
+    print_confirmation(
+        time_result=time_result,
+        project_paths=project_paths,
+        template_path=args.template,
+        output_path=args.output,
+        output_format=output_format_ext,
+        template_sections=template_sections
+    )
+    print("\n⚠️ 请确认以上信息是否正确，如需修改请重新运行脚本")
 
     print("📝 生成 Claude Code 调用说明...")
     generate_claude_call_instruction(Path(args.output), tasks)
