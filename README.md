@@ -21,7 +21,7 @@
 
 | Skill | 描述 | 语言 | 状态 | 文档 |
 |-------|------|------|------|------|
-| [weekly-report-generator](./skills/weekly-report-generator/) | 自动化周报生成器，从 Git 提交记录生成专业工作汇报 | Python | ✅ 已实现 | [查看](./skills/weekly-report-generator/SKILL.md) |
+| [weekly-report-generator](./.claude/skills/weekly-report-generator/) | 自动化周报生成器，从 Git 提交记录生成专业工作汇报 | Python | ✅ 已实现 | [查看](./.claude/skills/weekly-report-generator/SKILL.md) |
 
 ## 🚀 快速开始
 
@@ -138,7 +138,7 @@ skills/your-skill-name/
 
 ### Skill 级文档
 
-- **[周报生成器 - 核心文档](./skills/weekly-report-generator/SKILL.md)** - 功能说明和使用流程
+- **[周报生成器 - 核心文档](./.claude/skills/weekly-report-generator/SKILL.md)** - 功能说明和使用流程
 
 ## 🎯 项目架构
 
