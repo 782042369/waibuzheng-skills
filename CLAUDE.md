@@ -110,22 +110,6 @@ Claude 会自动：
 - Python 3.8+ （如果 skill 使用 Python）
 - Node.js 20+ （如果 skill 使用 Node.js）
 
-### 快速开始
-
-1. **克隆仓库**
-   ```bash
-   git clone https://github.com/782042369/waibuzheng-skills.git
-   cd waibuzheng-skills
-   cp .claude/skills/weekly-report-generator ～/.claude/skills
-   ```
-
-   ```
-
-2. **使用 skill**
-   - 参考 skill 的 `SKILL.md` 文档
-   - 按照 5 步工作流程使用
-
-
 ## AI 使用指引
 
 ### 适合 AI 辅助的任务
